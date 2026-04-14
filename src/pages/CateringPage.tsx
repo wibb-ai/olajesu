@@ -1,11 +1,10 @@
 import Navbar from '../components/Navbar';
-import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 import EnquiryForm from '../components/EnquiryForm';
 import Contact from '../components/Contact';
 import CateringMenu from '../components/CateringMenu';
+import CateringHero from '../components/CateringHero';
 import { CartProvider } from '../context/CartContext';
-import { ScribbleUnderline, DotPattern } from '../components/DecorativeElements';
 
 export default function CateringPage() {
   return (
@@ -13,151 +12,177 @@ export default function CateringPage() {
       <div className="min-h-screen">
         <Navbar />
         <main>
-        <div id="hero">
-          <Hero 
-            title="Catering Services"
-            subtitle="Make your event unforgettable with authentic Nigerian cuisine"
-            primaryCTA="Get Quote"
-            secondaryCTA={{ text: "Looking for takeaway?", link: "/" }}
-            microCopy="Professional catering for events of all sizes. Minimum order lead time: 48 hours. Browse our menu and contact us for custom quotes."
-          />
-        </div>
-
-        {/* About Catering Section */}
-        <section id="about" className="py-24 bg-white relative overflow-hidden">
-          <DotPattern className="absolute inset-0 text-brand-green opacity-30" />
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16 relative">
-              <h2 className="text-5xl font-bold text-brand-dark mb-4 relative inline-block">
-                About Our Catering Service
-                <div className="absolute -bottom-2 left-0 right-0">
-                  <ScribbleUnderline className="w-full h-3 text-brand-gold" />
-                </div>
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-12 items-center mb-16 relative z-10">
-              <div>
-                <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-brand-gold to-brand-green rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity"></div>
-                  <img
-                    src="https://images.pexels.com/photos/5638732/pexels-photo-5638732.jpeg?auto=compress&cs=tinysrgb&w=800"
-                    alt="Catering setup"
-                    className="rounded-2xl shadow-2xl w-full h-[500px] object-cover relative z-10 ring-4 ring-brand-gold/20"
-                  />
-                </div>
-              </div>
-              <div className="space-y-6">
-                <p className="text-lg text-brand-green leading-relaxed">
-                  Transform your special occasions into memorable culinary experiences with our professional catering service. Whether you're hosting an intimate dinner party, a corporate event, or a grand wedding celebration, we provide authentic Nigerian cuisine that impresses guests and honors traditions.
-                </p>
-                <p className="text-lg text-brand-green leading-relaxed">
-                  Our experienced team handles everything from menu planning to setup and service, ensuring your event runs smoothly while you focus on your guests. Every dish is carefully crafted using traditional recipes and fresh ingredients, maintaining the authentic flavors you love.
-                </p>
-                <p className="text-lg text-brand-green leading-relaxed">
-                  We cater events of all sizes, from intimate gatherings of 20 guests to large celebrations of 500+. Minimum order lead time is 48 hours to ensure the freshest preparation.
-                </p>
-              </div>
-            </div>
+          {/* Minimal Hero */}
+          <div id="hero">
+            <CateringHero />
           </div>
-        </section>
 
-        {/* Catering Menu Section */}
-        <section id="services" className="py-24 bg-white">
-          <CateringMenu />
-        </section>
-
-        {/* Benefits Section - New Design */}
-        <section id="gallery" className="py-24 bg-white relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6">
-            {/* Header Section - Title Left, Description Right */}
-            <div className="grid md:grid-cols-2 gap-12 items-start mb-20">
-              <div>
-                <h2 className="text-5xl md:text-6xl font-bold text-brand-dark mb-6 leading-tight">
-                  Why Choose<br />Our Catering?
+          {/* About Catering Section - Elegant Design */}
+          <section id="about" className="py-32 bg-white relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
+            
+            <div className="max-w-6xl mx-auto px-6">
+              {/* Section header */}
+              <div className="text-center mb-20">
+                <div className="inline-flex items-center gap-3 mb-6">
+                  <div className="h-px w-8 bg-brand-gold" />
+                  <span className="text-sm font-medium tracking-[0.2em] uppercase text-brand-green/60">
+                    Our Promise
+                  </span>
+                  <div className="h-px w-8 bg-brand-gold" />
+                </div>
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brand-dark tracking-tight">
+                  Crafted With Care
                 </h2>
               </div>
-              <div className="pt-4">
-                <p className="text-lg text-brand-green/80 leading-relaxed">
-                  We provide the best catering services with a guarantee. We are the premier Nigerian catering service in Manchester and always bring the best options for our customers and clients. We never compromise on quality or authenticity. Every dish is crafted with traditional recipes, fresh ingredients, and a commitment to excellence that makes your event truly memorable.
+
+              {/* Main statement */}
+              <div className="max-w-3xl mx-auto text-center mb-16">
+                <p className="text-xl md:text-2xl text-brand-dark font-light leading-relaxed">
+                  Transform your special occasions into memorable culinary experiences. 
+                  We bring the authentic taste of Nigeria to your most important moments.
                 </p>
               </div>
-            </div>
-
-            {/* Central Visual with Content Blocks Around */}
-            <div className="relative">
-              {/* Central Image with Curved Background */}
-              <div className="relative flex items-center justify-center my-16 md:my-24">
-                {/* Curved Gradient Background */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full max-w-2xl h-[600px] md:h-[700px] relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/20 via-brand-cream/30 to-brand-gold/10 rounded-[50%] transform scale-y-[0.6]"></div>
-                    {/* Subtle dashed lines */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32 border-l-2 border-dashed border-brand-gold/20"></div>
+              
+              {/* Features */}
+              <div className="grid sm:grid-cols-2 gap-8 max-w-3xl mx-auto mb-20">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-1 h-8 bg-brand-gold" />
+                    <h3 className="text-sm font-medium tracking-[0.15em] uppercase text-brand-dark">
+                      Full Service
+                    </h3>
                   </div>
+                  <p className="text-brand-green/70 leading-relaxed pl-4">
+                    From menu planning to setup and service, our experienced team handles every detail so you can focus on your guests.
+                  </p>
                 </div>
                 
-                {/* Central Image */}
-                <div className="relative z-10 w-full max-w-md md:max-w-lg">
-                  <div className="relative group">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-brand-gold to-brand-green rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity"></div>
-                    <img
-                      src="https://images.pexels.com/photos/5638732/pexels-photo-5638732.jpeg?auto=compress&cs=tinysrgb&w=800"
-                      alt="Catering service"
-                      className="rounded-3xl shadow-2xl w-full h-[500px] md:h-[600px] object-cover relative z-10 ring-4 ring-brand-gold/20"
-                    />
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-1 h-8 bg-brand-gold" />
+                    <h3 className="text-sm font-medium tracking-[0.15em] uppercase text-brand-dark">
+                      Any Scale
+                    </h3>
                   </div>
+                  <p className="text-brand-green/70 leading-relaxed pl-4">
+                    From intimate gatherings of 20 to grand celebrations of 500+, we scale seamlessly to your event's needs.
+                  </p>
                 </div>
               </div>
 
-              {/* Content Blocks - Arranged Around Central Image */}
-              <div className="grid md:grid-cols-2 gap-12 lg:gap-16 relative z-20">
-                {/* Left Side - Top Block */}
-                <div className="md:pr-8 lg:pr-12">
-                  <h3 className="text-2xl md:text-3xl font-bold text-brand-dark mb-2">Authentic Heritage</h3>
-                  <p className="text-brand-gold font-semibold mb-3">Traditional Recipes That Matter</p>
-                  <p className="text-brand-green leading-relaxed">
-                    Our team has an in-depth understanding of authentic Nigerian cuisine. Every dish is prepared using traditional recipes passed down through generations, ensuring the authentic flavors you love.
+              {/* Stats Row */}
+              <div className="border-t border-b border-brand-gold/20 py-12">
+                <div className="grid grid-cols-3 gap-8">
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="text-4xl md:text-5xl font-bold text-brand-dark">48</span>
+                      <span className="text-xl md:text-2xl font-light text-brand-green/50 ml-1">hrs</span>
+                    </div>
+                    <p className="text-xs md:text-sm text-brand-green/60 uppercase tracking-wider">Minimum Lead Time</p>
+                  </div>
+                  <div className="text-center border-l border-r border-brand-gold/20">
+                    <div className="mb-2">
+                      <span className="text-4xl md:text-5xl font-bold text-brand-dark">500</span>
+                      <span className="text-xl md:text-2xl font-light text-brand-green/50 ml-1">+</span>
+                    </div>
+                    <p className="text-xs md:text-sm text-brand-green/60 uppercase tracking-wider">Events Catered</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="text-4xl md:text-5xl font-bold text-brand-dark">4.9</span>
+                      <span className="text-xl md:text-2xl font-light text-brand-green/50 ml-1">★</span>
+                    </div>
+                    <p className="text-xs md:text-sm text-brand-green/60 uppercase tracking-wider">Google Rating</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Catering Menu Section */}
+          <section id="services">
+            <CateringMenu />
+          </section>
+
+          {/* Benefits Section - Clean Grid, No Images */}
+          <section id="benefits" className="py-24 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              {/* Header */}
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-brand-dark mb-4 uppercase tracking-wide">
+                  Why Choose Us
+                </h2>
+                <div className="w-24 h-1 bg-brand-gold mx-auto mb-6" />
+                <p className="text-lg text-brand-green/80 max-w-2xl mx-auto leading-relaxed">
+                  We are the premier Nigerian catering service in Manchester. We never compromise on quality or authenticity.
+                </p>
+              </div>
+
+              {/* Benefits Grid - 2x2 */}
+              <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
+                {/* Benefit 1 */}
+                <div className="border-l-2 border-brand-gold pl-6">
+                  <h3 className="text-2xl font-bold text-brand-dark mb-2 uppercase tracking-wide">
+                    Authentic Heritage
+                  </h3>
+                  <p className="text-brand-gold font-semibold mb-3 text-sm uppercase tracking-wider">
+                    Traditional Recipes That Matter
+                  </p>
+                  <p className="text-brand-green/80 leading-relaxed">
+                    Every dish is prepared using traditional recipes passed down through generations, ensuring the authentic flavors you love.
                   </p>
                 </div>
 
-                {/* Right Side - Top Block */}
-                <div className="md:pl-8 lg:pl-12">
-                  <h3 className="text-2xl md:text-3xl font-bold text-brand-dark mb-2">Professional Excellence</h3>
-                  <p className="text-brand-gold font-semibold mb-3">Your Success Is Our Priority</p>
-                  <p className="text-brand-green leading-relaxed">
-                    Our experienced team handles everything from menu planning to setup and service. We ensure your event runs smoothly so you can focus on your guests and enjoy the celebration.
+                {/* Benefit 2 */}
+                <div className="border-l-2 border-brand-gold pl-6">
+                  <h3 className="text-2xl font-bold text-brand-dark mb-2 uppercase tracking-wide">
+                    Professional Excellence
+                  </h3>
+                  <p className="text-brand-gold font-semibold mb-3 text-sm uppercase tracking-wider">
+                    Your Success Is Our Priority
+                  </p>
+                  <p className="text-brand-green/80 leading-relaxed">
+                    Our experienced team handles everything from menu planning to setup and service, ensuring your event runs smoothly.
                   </p>
                 </div>
 
-                {/* Left Side - Bottom Block */}
-                <div className="md:pr-8 lg:pr-12">
-                  <h3 className="text-2xl md:text-3xl font-bold text-brand-dark mb-2">Flexible Service</h3>
-                  <p className="text-brand-gold font-semibold mb-3">Tailored To Your Needs</p>
-                  <p className="text-brand-green leading-relaxed">
-                    We provide customized solutions to meet your unique event requirements. From intimate gatherings of 20 to grand celebrations of 500+, we scale seamlessly to your needs.
+                {/* Benefit 3 */}
+                <div className="border-l-2 border-brand-gold pl-6">
+                  <h3 className="text-2xl font-bold text-brand-dark mb-2 uppercase tracking-wide">
+                    Flexible Service
+                  </h3>
+                  <p className="text-brand-gold font-semibold mb-3 text-sm uppercase tracking-wider">
+                    Tailored To Your Needs
+                  </p>
+                  <p className="text-brand-green/80 leading-relaxed">
+                    From intimate gatherings of 20 to grand celebrations of 500+, we scale seamlessly to meet your unique requirements.
                   </p>
                 </div>
 
-                {/* Right Side - Bottom Block */}
-                <div className="md:pl-8 lg:pl-12">
-                  <h3 className="text-2xl md:text-3xl font-bold text-brand-dark mb-2">Trusted Reputation</h3>
-                  <p className="text-brand-gold font-semibold mb-3">Trusted By Many</p>
-                  <p className="text-brand-green leading-relaxed">
-                    We are proud to have served 500+ events across Manchester and have received accolades for our outstanding service. Our 4.9-star rating reflects our commitment to excellence.
+                {/* Benefit 4 */}
+                <div className="border-l-2 border-brand-gold pl-6">
+                  <h3 className="text-2xl font-bold text-brand-dark mb-2 uppercase tracking-wide">
+                    Trusted Reputation
+                  </h3>
+                  <p className="text-brand-gold font-semibold mb-3 text-sm uppercase tracking-wider">
+                    500+ Events Served
+                  </p>
+                  <p className="text-brand-green/80 leading-relaxed">
+                    Our 4.9-star rating reflects our commitment to excellence and the trust our clients place in us.
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <EnquiryForm defaultServiceType="catering" />
-        <Contact />
+          <EnquiryForm defaultServiceType="catering" />
+          <Contact />
         </main>
         <Footer />
       </div>
     </CartProvider>
   );
 }
-

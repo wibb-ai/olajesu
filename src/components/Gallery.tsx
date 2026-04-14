@@ -1,3 +1,5 @@
+import OrderingButtons from './OrderingButtons';
+
 export default function Gallery() {
   const dishes = [
     {
@@ -94,11 +96,15 @@ export default function Gallery() {
           ))}
         </div>
 
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center space-y-6">
           <p className="text-brand-green text-lg">
             All dishes are prepared fresh using authentic Nigerian ingredients and traditional cooking methods. Free
             delivery on call-in takeaway orders from £30 within our delivery area.
           </p>
+          <div className="pt-4">
+            <p className="text-brand-dark font-semibold mb-4">Ready to order?</p>
+            <OrderingButtons variant="compact" />
+          </div>
         </div>
       </div>
     </section>

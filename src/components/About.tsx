@@ -20,7 +20,7 @@ export default function About() {
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-brand-gold to-brand-green rounded-3xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity"></div>
               <img
-                src="/public/aboutimage.jpeg"
+                src="/aboutimage.jpeg"
                 alt="Nigerian cuisine preparation"
                 className="rounded-2xl shadow-2xl w-full h-[500px] object-cover relative z-10 ring-4 ring-brand-gold/20"
               />

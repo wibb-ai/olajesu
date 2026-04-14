@@ -1,18 +1,41 @@
-import { Heart } from 'lucide-react';
+import { Heart, Phone, Mail, MapPin } from 'lucide-react';
+import { businessConfig } from '../config/businessConfig';
+import OrderingButtons from './OrderingButtons';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { contact } = businessConfig;
 
   return (
     <footer className="bg-brand-dark text-white py-12">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-2xl font-bold mb-4 text-brand-gold">Olajesu Kitchen</h3>
-            <p className="text-brand-cream leading-relaxed">
+            <p className="text-brand-cream leading-relaxed mb-4">
               Bringing authentic Nigerian cuisine to Manchester through premium meal prep
               and catering services.
             </p>
+            <div className="space-y-2">
+              <a
+                href={`tel:${contact.phone.replace(/\s/g, '')}`}
+                className="flex items-center gap-2 text-brand-cream hover:text-brand-gold transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                <span>{contact.phone}</span>
+              </a>
+              <a
+                href={`mailto:${contact.email}`}
+                className="flex items-center gap-2 text-brand-cream hover:text-brand-gold transition-colors text-sm"
+              >
+                <Mail className="w-4 h-4" />
+                <span>{contact.email}</span>
+              </a>
+              <div className="flex items-start gap-2 text-brand-cream text-sm">
+                <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+                <span>{contact.address.full}</span>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -31,6 +54,13 @@ export default function Footer() {
                 <a href="#enquiry" className="hover:text-brand-gold transition-colors">Contact</a>
               </li>
             </ul>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-bold mb-4">Order Now</h4>
+            <div className="space-y-3">
+              <OrderingButtons variant="compact" showCallButton={false} />
+            </div>
           </div>
 
           <div>

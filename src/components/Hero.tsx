@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Star, ArrowRight } from 'lucide-react';
+import OrderingButtons from './OrderingButtons';
 
 const images = [
   {
@@ -93,6 +94,9 @@ export default function Hero({
               <ArrowRight className="w-4 h-4" />
             </Link>
           )}
+        </div>
+        <div className="mb-6">
+          <OrderingButtons variant="compact" />
         </div>
         {microCopy && (
           <p className="mt-4 text-sm md:text-sm text-gray-700">
