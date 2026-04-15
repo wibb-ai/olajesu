@@ -1,98 +1,119 @@
-import { Star, ChevronDown } from 'lucide-react';
+const c = {
+  border: '#DDD6C4',
+  muted: '#6B6355',
+};
 
 export default function CateringHero() {
-  const scrollToEnquiry = () => {
-    document.getElementById('enquiry')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToMenu = () => {
-    document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <section className="relative min-h-screen flex flex-col bg-brand-cream overflow-hidden">
-      {/* Subtle background texture */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+    <section style={{
+      position: 'relative', minHeight: '100vh',
+      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+      overflow: 'hidden',
+    }}>
+      {/* Gradient background */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `
+          radial-gradient(ellipse at 30% 40%, rgba(61,74,46,0.08) 0%, transparent 55%),
+          radial-gradient(ellipse at 70% 60%, rgba(156,139,110,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 80%, rgba(61,74,46,0.06) 0%, transparent 50%),
+          linear-gradient(180deg, #F7F2E8 0%, #EDE6D3 50%, #F7F2E8 100%)
+        `,
       }} />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-24 relative z-10">
-        <div className="text-center max-w-5xl">
-          {/* Small label */}
-          <div className="inline-flex items-center gap-3 mb-8">
-            <div className="h-px w-8 bg-brand-gold" />
-            <span className="text-sm font-medium tracking-[0.2em] uppercase text-brand-green">
-              Premium Catering
-            </span>
-            <div className="h-px w-8 bg-brand-gold" />
-          </div>
+      {/* Grain overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, opacity: 0.04,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+      }} />
 
-          {/* Main Title */}
-          <h1 className="mb-6">
-            <span className="block text-5xl md:text-7xl lg:text-8xl font-bold text-brand-dark tracking-tight">
-              Elevate Your
-            </span>
-            <span className="block text-5xl md:text-7xl lg:text-8xl font-bold text-brand-dark tracking-tight mt-2">
-              Event
-            </span>
-          </h1>
+      {/* Decorative circles */}
+      <div style={{
+        position: 'absolute', top: '10%', right: '-15%',
+        width: '500px', height: '500px', borderRadius: '50%',
+        border: '1px solid rgba(61,74,46,0.1)', pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', top: '15%', right: '-10%',
+        width: '380px', height: '380px', borderRadius: '50%',
+        border: '1px solid rgba(156,139,110,0.08)', pointerEvents: 'none',
+      }} />
 
-          {/* Elegant divider */}
-          <div className="flex items-center justify-center gap-4 my-8">
-            <div className="h-px w-16 bg-brand-gold/40" />
-            <div className="w-2 h-2 rotate-45 bg-brand-gold" />
-            <div className="h-px w-16 bg-brand-gold/40" />
-          </div>
+      {/* Hero content */}
+      <div style={{ position: 'relative', padding: '120px 24px 80px', maxWidth: '640px' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '32px', height: '1px', background: '#1B4332' }} />
+          <span style={{ fontFamily: 'sans-serif', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1B4332' }}>
+            Manchester · Authentic Nigerian
+          </span>
+        </div>
 
-          {/* Tagline */}
-          <p className="text-lg md:text-xl text-brand-green/80 max-w-2xl mx-auto leading-relaxed font-light">
-            Authentic Nigerian cuisine crafted for your most memorable occasions. 
-            From intimate gatherings to grand celebrations.
-          </p>
+        <h1 style={{
+          fontFamily: "'Georgia', serif",
+          fontSize: 'clamp(42px, 10vw, 72px)',
+          fontWeight: 400, lineHeight: 1.05,
+          margin: '0 0 24px', color: '#1A1A1A',
+        }}>
+          Food that carries<br />
+          <span style={{
+            fontStyle: 'italic',
+            background: 'linear-gradient(90deg, #1B4332, #9C8B6E)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>the flavour</span><br />
+          of home.
+        </h1>
 
-          {/* Trust indicators */}
-          <div className="flex items-center justify-center gap-6 mt-10 mb-12">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-brand-gold text-brand-gold" />
-                ))}
-              </div>
-              <span className="text-sm text-brand-green/70">4.9 on Google</span>
-            </div>
-            <div className="h-4 w-px bg-brand-green/20" />
-            <span className="text-sm text-brand-green/70">500+ Events Served</span>
-          </div>
+        <p style={{
+          fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.7,
+          color: 'rgba(26,26,26,0.6)', margin: '0 0 40px', maxWidth: '420px',
+        }}>
+          Authentic Nigerian cuisine  cooked from scratch, delivered to your door in less than 60 minutes. From Jollof Rice to Egusi Soup, this is the real thing.
+        </p>
 
-          {/* CTA */}
-          <div className="flex items-center justify-center">
-            <button
-              onClick={scrollToEnquiry}
-              className="group bg-brand-dark hover:bg-brand-green text-white px-12 py-4 text-sm font-medium tracking-wider uppercase transition-all duration-300"
-            >
-              Request a Quote
-            </button>
-          </div>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <a href="#order" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: '#1B4332', color: '#F7F2E8',
+            padding: '14px 28px', textDecoration: 'none',
+            fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 700,
+            letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: '2px',
+          }}>
+            Order Direct <span style={{ fontSize: '16px' }}>→</span>
+          </a>
+          <a href="#menu" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            border: '1px solid rgba(61,74,46,0.3)', color: '#1B4332',
+            padding: '14px 28px', textDecoration: 'none',
+            fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 400,
+            letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: '2px',
+          }}>
+            View Menu
+          </a>
         </div>
       </div>
 
-      {/* Bottom section with scroll indicator */}
-      <div className="pb-12 flex flex-col items-center gap-4">
-        <button 
-          onClick={scrollToMenu}
-          className="flex flex-col items-center gap-2 text-brand-green/50 hover:text-brand-green transition-colors group"
-        >
-          <span className="text-xs font-medium tracking-widest uppercase">View Menu</span>
-          <ChevronDown className="w-5 h-5 animate-bounce" />
-        </button>
+      {/* Stats bar */}
+      <div style={{
+        position: 'relative',
+        borderTop: `1px solid ${c.border}`,
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        background: 'rgba(237,230,211,0.95)', backdropFilter: 'blur(10px)',
+      }}>
+        {[
+          { num: '500+', label: 'Orders Delivered' },
+          { num: '45-60 min', label: 'Average Delivery' },
+          { num: '4.1 ★', label: 'Uber Eats Rating' },
+        ].map((s, i) => (
+          <div key={i} style={{
+            padding: '20px 16px', textAlign: 'center',
+            borderRight: i < 2 ? `1px solid ${c.border}` : 'none',
+          }}>
+            <div style={{ fontSize: '22px', fontWeight: 700, color: '#1B4332', fontFamily: "'Georgia', serif", marginBottom: '4px' }}>{s.num}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: c.muted, fontFamily: 'sans-serif' }}>{s.label}</div>
+          </div>
+        ))}
       </div>
-
-      {/* Decorative corner elements */}
-      <div className="absolute top-8 left-8 w-24 h-24 border-l-2 border-t-2 border-brand-gold/20" />
-      <div className="absolute top-8 right-8 w-24 h-24 border-r-2 border-t-2 border-brand-gold/20" />
-      <div className="absolute bottom-8 left-8 w-24 h-24 border-l-2 border-b-2 border-brand-gold/20" />
-      <div className="absolute bottom-8 right-8 w-24 h-24 border-r-2 border-b-2 border-brand-gold/20" />
     </section>
   );
 }

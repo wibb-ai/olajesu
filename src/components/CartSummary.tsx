@@ -1,60 +1,74 @@
-import { X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+
+const clr = {
+  card: '#EDE6D3',
+  border: '#DDD6C4',
+  green: '#1B4332',
+  cream: '#F7F2E8',
+  muted: '#6B6355',
+};
 
 export default function CartSummary() {
   const { items, removeItem, clearCart } = useCart();
 
-  if (items.length === 0) {
-    return null;
-  }
+  if (items.length === 0) return null;
 
   return (
-    <div className="mb-8 p-6 bg-white rounded-2xl border-2 border-brand-gold/30 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-brand-dark">
+    <div style={{
+      marginBottom: '24px', padding: '24px',
+      background: clr.card, border: `1px solid ${clr.border}`, borderRadius: '2px',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <span style={{ fontFamily: "'Georgia', serif", fontSize: '17px', color: '#1A1A1A' }}>
           Selected Items ({items.length})
-        </h3>
+        </span>
         <button
           onClick={clearCart}
-          className="text-sm text-brand-green hover:text-brand-dark transition-colors"
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontFamily: 'sans-serif', fontSize: '11px', letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: clr.muted,
+          }}
         >
           Clear All
         </button>
       </div>
-      
-      <div className="space-y-3 max-h-64 overflow-y-auto">
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
         {items.map((item, index) => (
           <div
             key={`${item.dishId}-${item.size}-${index}`}
-            className="flex items-start justify-between p-3 bg-brand-cream/50 rounded-lg"
+            style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+              padding: '10px 12px', background: clr.cream, borderRadius: '2px',
+            }}
           >
-            <div className="flex-1">
-              <p className="font-semibold text-brand-dark">{item.dishName}</p>
-              <p className="text-sm text-brand-green">
-                {item.size}
-                {item.serves && <span className="ml-2 text-xs">({item.serves})</span>}
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 600, color: '#1A1A1A', margin: 0 }}>{item.dishName}</p>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '11px', color: clr.muted, margin: '2px 0 0' }}>
+                {item.size}{item.serves ? ` · ${item.serves}` : ''}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="font-bold text-brand-gold">{item.price}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
               <button
                 onClick={() => removeItem(item.dishId, item.size)}
-                className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'sans-serif', fontSize: '14px', color: clr.muted,
+                  padding: '0 4px', lineHeight: 1,
+                }}
                 aria-label="Remove item"
               >
-                <X className="w-4 h-4 text-red-600" />
+                ×
               </button>
             </div>
           </div>
         ))}
       </div>
-      
-      <div className="mt-4 pt-4 border-t border-brand-gold/30">
-        <p className="text-xs text-brand-green/70">
-          These items will be automatically added to your enquiry notes below.
-        </p>
-      </div>
+
+      <p style={{ fontFamily: 'sans-serif', fontSize: '11px', color: clr.muted, margin: '12px 0 0', borderTop: `1px solid ${clr.border}`, paddingTop: '12px' }}>
+        These items will be included in your enquiry below.
+      </p>
     </div>
   );
 }
-

@@ -4,8 +4,7 @@ export interface CartItem {
   dishId: string;
   dishName: string;
   size: string;
-  price: string;
-  serves?: string;
+  serves: string;
 }
 
 interface CartContextType {
@@ -59,8 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     Object.entries(grouped).forEach(([dishName, dishItems]) => {
       lines.push(`\n${dishName}:`);
       dishItems.forEach((item) => {
-        const serveInfo = item.serves ? ` (${item.serves})` : '';
-        lines.push(`  - ${item.size}: ${item.price}${serveInfo}`);
+        lines.push(`  - ${item.size} (${item.serves})`);
       });
     });
 

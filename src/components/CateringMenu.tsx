@@ -1,191 +1,151 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, ShoppingCart, Check } from 'lucide-react';
 import { cateringMenu, categories, CateringDish } from '../data/cateringMenu';
 import { useCart } from '../context/CartContext';
+import { AnimatedSection } from '../utils/animation';
+
+const clr = {
+  card: '#EDE6D3',
+  border: '#DDD6C4',
+  green: '#1B4332',
+  muted: '#6B6355',
+  cream: '#F7F2E8',
+};
 
 export default function CateringMenu() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All Dishes');
+  const displayCategories = categories.filter(c => c !== 'All Dishes');
+  const [activeCategory, setActiveCategory] = useState(displayCategories[0]);
   const [expandedDish, setExpandedDish] = useState<string | null>(null);
   const { addItem, items } = useCart();
 
-  const filteredDishes = selectedCategory === 'All Dishes' 
-    ? cateringMenu 
-    : cateringMenu.filter(dish => dish.category === selectedCategory);
+  const filteredDishes = cateringMenu.filter(d => d.category === activeCategory);
 
-  const categoriesInView = selectedCategory === 'All Dishes'
-    ? categories.filter(c => c !== 'All Dishes')
-    : [selectedCategory];
-
-  const getDishesByCategory = (category: string) => {
-    return filteredDishes.filter(dish => dish.category === category);
+  const handleAdd = (dish: CateringDish, size: { size: string; serves: string }) => {
+    addItem({ dishId: dish.id, dishName: dish.name, size: size.size, serves: size.serves });
   };
 
-  const toggleDishOptions = (dishId: string) => {
-    setExpandedDish(expandedDish === dishId ? null : dishId);
-  };
-
-  const handleAddToEnquiry = (dish: CateringDish, size: { size: string; price: string; serves?: string }) => {
-    addItem({
-      dishId: dish.id,
-      dishName: dish.name,
-      size: size.size,
-      price: size.price,
-      serves: size.serves,
-    });
-  };
-
-  const isItemInCart = (dishId: string, size: string) => {
-    return items.some((item) => item.dishId === dishId && item.size === size);
-  };
+  const isInCart = (dishId: string, size: string) =>
+    items.some(item => item.dishId === dishId && item.size === size);
 
   return (
-    <section className="py-24 bg-brand-cream">
-      <div className="max-w-5xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-6xl font-bold text-brand-dark mb-6 tracking-tight">MENU</h2>
-          <div className="w-full h-px bg-brand-green/20 mb-8"></div>
-        </div>
+    <section id="menu" style={{ padding: '80px 0', borderTop: `1px solid ${clr.border}` }}>
+      {/* Header */}
+      <div style={{ padding: '0 24px', maxWidth: '760px', margin: '0 auto 48px' }}>
+        <AnimatedSection>
+          <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '24px', height: '1px', background: clr.green }} />
+            <span style={{ fontFamily: 'sans-serif', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: clr.green }}>
+              Catering Menu
+            </span>
+          </div>
+          <h2 style={{ fontFamily: "'Georgia', serif", fontSize: '36px', fontWeight: 400, lineHeight: 1.1, margin: 0, color: '#1A1A1A' }}>
+            The Menu
+          </h2>
+        </AnimatedSection>
+      </div>
 
-        {/* Category Tabs */}
-        <div className="mb-12 flex flex-wrap justify-center gap-4 border-b border-brand-green/20 pb-6">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => {
-                setSelectedCategory(category);
-                setExpandedDish(null);
-              }}
-              className={`px-4 py-2 text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
-                selectedCategory === category
-                  ? 'text-brand-gold border-b-2 border-brand-gold'
-                  : 'text-brand-green hover:text-brand-gold'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+      {/* Category tabs */}
+      <div className="menu-tabs" style={{
+        display: 'flex', gap: '0', overflowX: 'auto', padding: '0 24px',
+        borderBottom: `1px solid ${clr.border}`, marginBottom: '40px',
+        scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
+      }}>
+        {displayCategories.map(cat => (
+          <button key={cat} onClick={() => { setActiveCategory(cat); setExpandedDish(null); }} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: '14px 20px', whiteSpace: 'nowrap',
+            fontFamily: 'sans-serif', fontSize: '12px', letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: activeCategory === cat ? 700 : 400,
+            color: activeCategory === cat ? clr.green : clr.muted,
+            borderBottom: activeCategory === cat ? `2px solid ${clr.green}` : '2px solid transparent',
+            transition: 'all 0.2s ease', marginBottom: '-1px',
+          }}>
+            {cat}
+          </button>
+        ))}
+      </div>
 
-        {/* Menu Content */}
-        <div className="space-y-16">
-          {categoriesInView.map((category) => {
-            const dishes = getDishesByCategory(category);
-            if (dishes.length === 0) return null;
-
-            return (
-              <div key={category}>
-                {/* Section Heading */}
-                <h3 className="text-3xl font-bold text-brand-dark mb-8 uppercase tracking-wide">
-                  {category}
-                </h3>
-                <div className="w-full h-px bg-brand-green/20 mb-8"></div>
-
-                {/* Dishes Grid - Two columns on larger screens */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10">
-                  {dishes.map((dish) => (
-                    <div key={dish.id} className="group">
-                      {/* Dish Name */}
-                      <h4 className="text-xl font-bold text-brand-dark mb-2 uppercase tracking-wide">
-                        {dish.name}
-                      </h4>
-                      
-                      {/* Description */}
-                      <p className="text-brand-green/80 leading-relaxed mb-3">
-                        {dish.description}
-                      </p>
-
-                      {/* Price and Options Toggle */}
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-brand-dark">
-                          {dish.basePrice}
-                        </span>
-                        <button
-                          onClick={() => toggleDishOptions(dish.id)}
-                          className="flex items-center gap-1 text-brand-gold hover:text-brand-dark text-sm font-medium transition-colors"
-                        >
-                          {expandedDish === dish.id ? (
-                            <>
-                              Hide options
-                              <ChevronUp className="w-4 h-4" />
-                            </>
-                          ) : (
-                            <>
-                              Show options
-                              <ChevronDown className="w-4 h-4" />
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Expanded Size Options */}
-                      {expandedDish === dish.id && (
-                        <div className="mt-4 pt-4 border-t border-brand-gold/30 space-y-3 animate-slide-up">
-                          {dish.sizes.map((size, idx) => {
-                            const inCart = isItemInCart(dish.id, size.size);
-                            return (
-                              <div
-                                key={idx}
-                                className="flex items-center justify-between p-3 bg-white/60 rounded-lg"
-                              >
-                                <div className="flex-1">
-                                  <p className="font-semibold text-brand-dark">{size.size}</p>
-                                  {size.serves && (
-                                    <p className="text-xs text-brand-green/70">{size.serves}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="font-bold text-brand-gold">{size.price}</span>
-                                  <button
-                                    onClick={() => handleAddToEnquiry(dish, size)}
-                                    disabled={inCart}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                      inCart
-                                        ? 'bg-brand-green text-white cursor-not-allowed'
-                                        : 'bg-brand-gold hover:bg-brand-gold/90 text-brand-dark hover:shadow-md'
-                                    }`}
-                                  >
-                                    {inCart ? (
-                                      <>
-                                        <Check className="w-3 h-3" />
-                                        Added
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ShoppingCart className="w-3 h-3" />
-                                        Add
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* Divider between items */}
-                      <div className="mt-6 h-px bg-brand-green/10"></div>
-                    </div>
-                  ))}
+      {/* Menu items */}
+      <div style={{ padding: '0 24px', maxWidth: '760px', margin: '0 auto' }}>
+        {filteredDishes.map((dish, i) => (
+          <AnimatedSection key={dish.id} delay={i * 0.08}>
+            <div style={{
+              padding: '24px 0', borderBottom: `1px solid ${clr.border}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontFamily: "'Georgia', serif", fontSize: '17px', color: '#1A1A1A' }}>{dish.name}</span>
+                  <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, margin: '6px 0 0', lineHeight: 1.6 }}>{dish.description}</p>
+                </div>
+                <div style={{ flexShrink: 0 }}>
+                  <button
+                    onClick={() => setExpandedDish(expandedDish === dish.id ? null : dish.id)}
+                    style={{
+                      background: 'transparent', border: `1px solid ${clr.green}`,
+                      color: clr.green, padding: '6px 14px', cursor: 'pointer',
+                      fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 700,
+                      letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: '2px',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => { (e.target as HTMLElement).style.background = clr.green; (e.target as HTMLElement).style.color = clr.cream; }}
+                    onMouseLeave={e => { (e.target as HTMLElement).style.background = 'transparent'; (e.target as HTMLElement).style.color = clr.green; }}
+                  >
+                    {expandedDish === dish.id ? 'Hide Sizes' : 'View Sizes'}
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Expanded size options */}
+              {expandedDish === dish.id && (
+                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {dish.sizes.map((size, idx) => {
+                    const added = isInCart(dish.id, size.size);
+                    return (
+                      <div key={idx} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', background: clr.card, borderRadius: '2px',
+                      }}>
+                        <div>
+                          <span style={{ fontFamily: 'sans-serif', fontSize: '14px', fontWeight: 600, color: '#1A1A1A' }}>{size.size}</span>
+                          <span style={{ fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, marginLeft: '8px' }}>· {size.serves}</span>
+                        </div>
+                        <button
+                          onClick={() => handleAdd(dish, size)}
+                          disabled={added}
+                          style={{
+                            background: added ? clr.green : 'transparent',
+                            border: `1px solid ${clr.green}`,
+                            color: added ? clr.cream : clr.green,
+                            padding: '5px 12px', cursor: added ? 'default' : 'pointer',
+                            fontFamily: 'sans-serif', fontSize: '10px', fontWeight: 700,
+                            letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: '2px',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {added ? '✓ Added' : 'Add to Enquiry'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </AnimatedSection>
+        ))}
 
         {filteredDishes.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-brand-green text-lg">No dishes found in this category.</p>
-          </div>
-        )}
-
-        <div className="mt-16 pt-8 border-t border-brand-green/20 text-center">
-          <p className="text-brand-green/80">
-            All dishes are prepared fresh using authentic Nigerian ingredients. Minimum order lead time: 48 hours. 
-            Contact us to discuss custom quantities or special dietary requirements.
+          <p style={{ fontFamily: 'sans-serif', fontSize: '14px', color: clr.muted, textAlign: 'center', padding: '40px 0' }}>
+            No dishes found in this category.
           </p>
-        </div>
+        )}
+      </div>
+
+      {/* Note */}
+      <div style={{ padding: '40px 24px 0', maxWidth: '760px', margin: '0 auto' }}>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, lineHeight: 1.7, textAlign: 'center' }}>
+          All dishes are prepared fresh using authentic Nigerian ingredients. Minimum order lead time: 48 hours.
+          Pricing is tailored to your event — submit an enquiry for a custom quote.
+        </p>
       </div>
     </section>
   );

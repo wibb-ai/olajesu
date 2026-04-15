@@ -1,88 +1,57 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+const c = {
+  border: '#DDD6C4',
+  green: '#1B4332',
+  cream: '#F7F2E8',
+  muted: '#6B6355',
+};
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const navLinks = [
-    { name: 'ABOUT', href: '#about' },
-    { name: 'MENU', href: '#services' },
-    { name: 'WHY US', href: '#benefits' },
-    { name: 'CONTACT', href: '#enquiry' },
-  ];
-
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsOpen(false);
-    }
-  };
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-brand-cream/95 backdrop-blur-sm z-50 border-b border-brand-gold/10">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between h-20">
-          <Link
-            to="/"
-            className="hover:opacity-70 transition-opacity"
-          >
-            <img
-              src="/olajesu.png"
-              alt="Olajesu Kitchen"
-              className="h-14 w-auto"
-            />
-          </Link>
-
-          <div className="hidden md:flex items-center gap-10">
-            {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => scrollToSection(link.href)}
-                className="text-sm font-medium text-brand-dark/70 hover:text-brand-dark transition-colors tracking-wider"
-              >
-                {link.name}
-              </button>
-            ))}
-            <button
-              onClick={() => scrollToSection('#enquiry')}
-              className="bg-brand-dark hover:bg-brand-green text-white px-8 py-3 text-sm font-medium tracking-wider uppercase transition-all duration-300"
-            >
-              Get Quote
-            </button>
-          </div>
-
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-brand-dark hover:opacity-60 transition-opacity"
-          >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+    <nav style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: scrolled ? 'rgba(247,242,232,0.97)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? `1px solid ${c.border}` : 'none',
+      transition: 'all 0.4s ease',
+      padding: '0 24px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      height: '80px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img
+          src="/olajesu_logo.png"
+          alt="Olajesu Kitchen"
+          style={{ height: '64px', width: 'auto', display: 'block' }}
+        />
       </div>
-
-      {isOpen && (
-        <div className="md:hidden bg-brand-cream border-t border-brand-gold/10">
-          <div className="px-6 py-6 space-y-4">
-            {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => scrollToSection(link.href)}
-                className="block w-full text-left text-sm font-medium text-brand-dark/70 hover:text-brand-dark py-2 transition-colors tracking-wider"
-              >
-                {link.name}
-              </button>
-            ))}
-            <button
-              onClick={() => scrollToSection('#enquiry')}
-              className="block w-full bg-brand-dark hover:bg-brand-green text-white px-6 py-3 text-sm font-medium tracking-wider uppercase transition-all mt-4"
-            >
-              Get Quote
-            </button>
-          </div>
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <a href="#menu" style={{
+          color: c.muted, textDecoration: 'none', fontSize: '12px',
+          fontFamily: 'sans-serif', padding: '8px 12px',
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+        }}>
+          Menu
+        </a>
+        <a href="#order" style={{
+          color: c.cream, background: c.green,
+          textDecoration: 'none', fontSize: '12px', fontFamily: 'sans-serif',
+          padding: '8px 16px', fontWeight: 700,
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+          borderRadius: '2px',
+        }}>
+          Order Now
+        </a>
+      </div>
     </nav>
   );
 }
