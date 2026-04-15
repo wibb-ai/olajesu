@@ -44,25 +44,32 @@ export default function CateringMenu() {
       </div>
 
       {/* Category tabs */}
-      <div className="menu-tabs" style={{
-        display: 'flex', gap: '0', overflowX: 'auto', padding: '0 24px',
-        borderBottom: `1px solid ${clr.border}`, marginBottom: '40px',
-        scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
-      }}>
-        {displayCategories.map(cat => (
-          <button key={cat} onClick={() => { setActiveCategory(cat); setExpandedDish(null); }} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: '14px 20px', whiteSpace: 'nowrap',
-            fontFamily: 'sans-serif', fontSize: '12px', letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            fontWeight: activeCategory === cat ? 700 : 400,
-            color: activeCategory === cat ? clr.green : clr.muted,
-            borderBottom: activeCategory === cat ? `2px solid ${clr.green}` : '2px solid transparent',
-            transition: 'all 0.2s ease', marginBottom: '-1px',
-          }}>
-            {cat}
-          </button>
-        ))}
+      <div style={{ position: 'relative' }}>
+        <div className="menu-tabs" style={{
+          display: 'flex', gap: '0', overflowX: 'auto', padding: '0 24px',
+          borderBottom: `1px solid ${clr.border}`, marginBottom: '40px',
+          scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
+        }}>
+          {displayCategories.map(cat => (
+            <button key={cat} onClick={() => { setActiveCategory(cat); setExpandedDish(null); }} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '14px 20px', whiteSpace: 'nowrap', flexShrink: 0,
+              fontFamily: 'sans-serif', fontSize: '12px', letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              fontWeight: activeCategory === cat ? 700 : 400,
+              color: activeCategory === cat ? clr.green : clr.muted,
+              borderBottom: activeCategory === cat ? `2px solid ${clr.green}` : '2px solid transparent',
+              transition: 'all 0.2s ease', marginBottom: '-1px',
+            }}>
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0, width: '48px',
+          background: 'linear-gradient(to right, transparent, #F7F2E8)',
+          pointerEvents: 'none',
+        }} />
       </div>
 
       {/* Menu items */}
