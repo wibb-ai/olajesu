@@ -11,15 +11,16 @@ export default function Footer() {
   return (
     <footer style={{ borderTop: `1px solid ${c.border}`, padding: '48px 24px 32px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '32px' }}>
+          <img
+            src="/olajesu_logo.png"
+            alt="Olajesu Kitchen"
+            style={{ height: '64px', width: 'auto', display: 'block' }}
+          />
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '40px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <img
-                src="/olajesu_logo.png"
-                alt="Olajesu Kitchen"
-                style={{ height: '64px', width: 'auto', display: 'block' }}
-              />
-            </div>
             <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: c.muted, lineHeight: 1.7, margin: '0 0 16px' }}>
               Authentic Nigerian cuisine, delivered from our Manchester kitchen to your door.
             </p>
