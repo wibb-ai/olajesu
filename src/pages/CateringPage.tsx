@@ -40,7 +40,7 @@ export default function CateringPage() {
         <CateringHero />
 
         {/* ─── Crafted With Care ─── */}
-        <section style={{ padding: '80px 24px', maxWidth: '760px', margin: '0 auto' }}>
+        <section style={{ padding: '80px 24px', maxWidth: '960px', margin: '0 auto' }}>
           <AnimatedSection>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '40px', flexWrap: 'wrap' }}>
               <div style={{ flex: '1', minWidth: '260px' }}>
@@ -69,7 +69,7 @@ export default function CateringPage() {
 
         {/* ─── Why Choose Us ─── */}
         <section style={{ padding: '80px 24px', borderTop: `1px solid ${c.border}` }}>
-          <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <AnimatedSection>
               <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '24px', height: '1px', background: '#9C8B6E' }} />
@@ -97,7 +97,7 @@ export default function CateringPage() {
 
         {/* ─── WhatsApp Banner ─── */}
         <section style={{ padding: '0 24px 80px' }}>
-          <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <AnimatedSection>
               <div style={{
                 background: 'linear-gradient(135deg, rgba(61,74,46,0.07) 0%, rgba(156,139,110,0.07) 100%)',

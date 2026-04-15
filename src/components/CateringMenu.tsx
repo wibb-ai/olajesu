@@ -29,7 +29,7 @@ export default function CateringMenu() {
   return (
     <section id="menu" style={{ padding: '80px 0', borderTop: `1px solid ${clr.border}` }}>
       {/* Header */}
-      <div style={{ padding: '0 24px', maxWidth: '760px', margin: '0 auto 48px' }}>
+      <div style={{ padding: '0 24px', maxWidth: '960px', margin: '0 auto 48px' }}>
         <AnimatedSection>
           <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '24px', height: '1px', background: clr.green }} />
@@ -44,7 +44,7 @@ export default function CateringMenu() {
       </div>
 
       {/* Category tabs */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', maxWidth: '960px', margin: '0 auto' }}>
         <div className="menu-tabs" style={{
           display: 'flex', gap: '0', overflowX: 'auto', padding: '0 24px',
           borderBottom: `1px solid ${clr.border}`, marginBottom: '40px',
@@ -73,7 +73,7 @@ export default function CateringMenu() {
       </div>
 
       {/* Menu items */}
-      <div style={{ padding: '0 24px', maxWidth: '760px', margin: '0 auto' }}>
+      <div style={{ padding: '0 24px', maxWidth: '960px', margin: '0 auto' }}>
         {filteredDishes.map((dish, i) => (
           <AnimatedSection key={dish.id} delay={i * 0.08}>
             <div style={{
@@ -148,7 +148,7 @@ export default function CateringMenu() {
       </div>
 
       {/* Note */}
-      <div style={{ padding: '40px 24px 0', maxWidth: '760px', margin: '0 auto' }}>
+      <div style={{ padding: '40px 24px 0', maxWidth: '960px', margin: '0 auto' }}>
         <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, lineHeight: 1.7, textAlign: 'center' }}>
           All dishes are prepared fresh using authentic Nigerian ingredients. Minimum order lead time: 48 hours.
           Pricing is tailored to your event, submit an enquiry for a custom quote.

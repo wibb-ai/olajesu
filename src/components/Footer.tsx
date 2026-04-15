@@ -10,7 +10,7 @@ export default function Footer() {
 
   return (
     <footer style={{ borderTop: `1px solid ${c.border}`, padding: '48px 24px 32px' }}>
-      <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '40px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>

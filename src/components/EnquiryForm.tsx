@@ -195,7 +195,7 @@ export default function EnquiryForm() {
 
   return (
     <section id="order" style={{ padding: '80px 24px', borderTop: `1px solid ${clr.border}` }}>
-      <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <AnimatedSection>
           <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '24px', height: '1px', background: clr.green }} />

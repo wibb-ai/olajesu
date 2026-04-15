@@ -40,7 +40,7 @@ export default function CateringHero() {
       }} />
 
       {/* Hero content */}
-      <div style={{ position: 'relative', padding: '120px 24px 80px', maxWidth: '640px' }}>
+      <div style={{ position: 'relative', padding: '120px 24px 80px', maxWidth: '960px', margin: '0 auto', width: '100%' }}>
         <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '32px', height: '1px', background: '#1B4332' }} />
           <span style={{ fontFamily: 'sans-serif', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1B4332' }}>
@@ -97,22 +97,26 @@ export default function CateringHero() {
       <div style={{
         position: 'relative',
         borderTop: `1px solid ${c.border}`,
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
         background: 'rgba(237,230,211,0.95)', backdropFilter: 'blur(10px)',
       }}>
-        {[
-          { num: '500+', label: 'Orders Delivered' },
-          { num: '45-60 min', label: 'Average Delivery' },
-          { num: '4.1 ★', label: 'Uber Eats Rating' },
-        ].map((s, i) => (
-          <div key={i} style={{
-            padding: '20px 16px', textAlign: 'center',
-            borderRight: i < 2 ? `1px solid ${c.border}` : 'none',
-          }}>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: '#1B4332', fontFamily: "'Georgia', serif", marginBottom: '4px' }}>{s.num}</div>
-            <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: c.muted, fontFamily: 'sans-serif' }}>{s.label}</div>
-          </div>
-        ))}
+        <div style={{
+          maxWidth: '960px', margin: '0 auto',
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        }}>
+          {[
+            { num: '500+', label: 'Orders Delivered' },
+            { num: '45-60 min', label: 'Average Delivery' },
+            { num: '4.1 ★', label: 'Uber Eats Rating' },
+          ].map((s, i) => (
+            <div key={i} style={{
+              padding: '20px 16px', textAlign: 'center',
+              borderRight: i < 2 ? `1px solid ${c.border}` : 'none',
+            }}>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#1B4332', fontFamily: "'Georgia', serif", marginBottom: '4px' }}>{s.num}</div>
+              <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: c.muted, fontFamily: 'sans-serif' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
