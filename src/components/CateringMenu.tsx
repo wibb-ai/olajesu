@@ -151,7 +151,7 @@ export default function CateringMenu() {
       <div style={{ padding: '40px 24px 0', maxWidth: '760px', margin: '0 auto' }}>
         <p style={{ fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, lineHeight: 1.7, textAlign: 'center' }}>
           All dishes are prepared fresh using authentic Nigerian ingredients. Minimum order lead time: 48 hours.
-          Pricing is tailored to your event — submit an enquiry for a custom quote.
+          Pricing is tailored to your event, submit an enquiry for a custom quote.
         </p>
       </div>
     </section>
