@@ -113,7 +113,7 @@ export default function CateringPage() {
                 <p style={{ fontFamily: 'sans-serif', fontSize: '14px', color: c.muted, margin: 0, lineHeight: 1.7 }}>
                   Weekly specials, new dishes, and first access to The Jollof Box launch  sent directly to your WhatsApp. No spam. Unsubscribe any time.
                 </p>
-                <a href="https://wa.me/447456272712?text=I%20want%20offers%20from%20OlaJesu" style={{
+                <a href="https://wa.me/447456272712?text=I%20want%20offers%20from%20OlaJesu" target="_blank" rel="noopener noreferrer" style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   background: '#25D366', color: '#FFFFFF', padding: '14px 28px',
                   textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px',

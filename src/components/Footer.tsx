@@ -31,18 +31,20 @@ export default function Footer() {
             <p style={{ fontFamily: 'sans-serif', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: c.muted, margin: '0 0 16px' }}>Contact</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {businessConfig.social.instagram ? (
-                <a href={businessConfig.social.instagram} style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}>Instagram</a>
+                <a href={businessConfig.social.instagram} target="_blank" rel="noopener noreferrer" style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}>Instagram</a>
               ) : (
                 <a href="#" style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}>Instagram</a>
               )}
               <a
                 href={`https://wa.me/${contact.phone.replace(/\s/g, '').replace('+', '')}`}
+                target="_blank" rel="noopener noreferrer"
                 style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}
               >
                 WhatsApp
               </a>
               <a
                 href={`mailto:${contact.email}`}
+                rel="noopener noreferrer"
                 style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}
               >
                 {contact.email}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import { useCart } from '../context/CartContext';
 import CartSummary from './CartSummary';
@@ -6,6 +6,8 @@ import { AnimatedSection } from '../utils/animation';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 const MIN_SUBMISSION_TIME_MS = 3000;
+const RATE_LIMIT_COOLDOWN_MS = 60_000;
+const MAX_SUBMISSIONS_PER_SESSION = 5;
 
 const clr = {
   card: '#EDE6D3',
@@ -27,6 +29,42 @@ const labelStyle: React.CSSProperties = {
   color: clr.muted, marginBottom: '8px',
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_RE = /^[+\d\s()-]{7,20}$/;
+const MAX_FIELD_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = 2000;
+
+function sanitize(str: string): string {
+  return str
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim();
+}
+
+function validateFields(data: Record<string, string>): string | null {
+  const name = data.name.trim();
+  if (!name || name.length < 2) return 'Please enter your full name.';
+  if (name.length > MAX_FIELD_LENGTH) return 'Name is too long.';
+
+  const email = data.email.trim();
+  if (!email) return 'Please enter your email address.';
+  if (!EMAIL_RE.test(email)) return 'Please enter a valid email address.';
+  if (email.length > MAX_FIELD_LENGTH) return 'Email is too long.';
+
+  if (data.phone && !PHONE_RE.test(data.phone.trim())) return 'Please enter a valid phone number.';
+  if (data.event && data.event.length > MAX_FIELD_LENGTH) return 'Event type is too long.';
+
+  if (data.guests) {
+    const n = Number(data.guests);
+    if (isNaN(n) || n < 1 || n > 10000) return 'Please enter a valid number of guests (1–10,000).';
+  }
+
+  if (data.message && data.message.length > MAX_MESSAGE_LENGTH) return 'Additional details is too long (max 2,000 characters).';
+
+  return null;
+}
+
 export default function EnquiryForm() {
   const { items, getFormattedNotes, clearCart } = useCart();
   const [formData, setFormData] = useState({
@@ -39,6 +77,8 @@ export default function EnquiryForm() {
   const [honeypot, setHoneypot] = useState('');
   const formLoadTime = useRef(Date.now());
   const turnstileRef = useRef<TurnstileInstance>(null);
+  const lastSubmitTime = useRef(0);
+  const submitCount = useRef(0);
 
   useEffect(() => {
     const cartNotes = getFormattedNotes();
@@ -67,39 +107,69 @@ export default function EnquiryForm() {
     }
   }, [items, getFormattedNotes]);
 
+  const handleFieldChange = useCallback((key: string, raw: string) => {
+    const value = key === 'message' ? raw : sanitize(raw);
+    setFormData(p => ({ ...p, [key]: value }));
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
-    if (honeypot) { setError('Submission blocked.'); setIsSubmitting(false); return; }
+    if (honeypot) { setIsSubmitting(false); return; }
+
     if (Date.now() - formLoadTime.current < MIN_SUBMISSION_TIME_MS) {
       setError('Please take your time filling out the form.'); setIsSubmitting(false); return;
     }
+
+    if (submitCount.current >= MAX_SUBMISSIONS_PER_SESSION) {
+      setError('Too many submissions. Please refresh the page or contact us directly.'); setIsSubmitting(false); return;
+    }
+    if (Date.now() - lastSubmitTime.current < RATE_LIMIT_COOLDOWN_MS && lastSubmitTime.current > 0) {
+      const secsLeft = Math.ceil((RATE_LIMIT_COOLDOWN_MS - (Date.now() - lastSubmitTime.current)) / 1000);
+      setError(`Please wait ${secsLeft} seconds before submitting again.`); setIsSubmitting(false); return;
+    }
+
+    const validationError = validateFields(formData);
+    if (validationError) { setError(validationError); setIsSubmitting(false); return; }
+
     if (TURNSTILE_SITE_KEY && !turnstileToken) {
-      setError('Please complete the security verification'); setIsSubmitting(false); return;
+      setError('Please complete the security verification.'); setIsSubmitting(false); return;
     }
 
     try {
       const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
       if (!accessKey) throw new Error('Web3Forms access key is not configured');
 
+      const sanitized = {
+        name: sanitize(formData.name),
+        email: sanitize(formData.email),
+        phone: sanitize(formData.phone),
+        event: sanitize(formData.event),
+        guests: sanitize(formData.guests),
+        date: sanitize(formData.date),
+        message: sanitize(formData.message),
+      };
+
       const fd = new FormData();
       fd.append('access_key', accessKey);
-      fd.append('name', formData.name);
-      fd.append('email', formData.email);
+      fd.append('name', sanitized.name);
+      fd.append('email', sanitized.email);
       fd.append('botcheck', '');
       if (turnstileToken) fd.append('cf-turnstile-response', turnstileToken);
-      if (formData.phone) fd.append('phone', formData.phone);
-      if (formData.event) fd.append('event_type', formData.event);
-      if (formData.guests) fd.append('guest_count', formData.guests);
-      if (formData.date) fd.append('event_date', formData.date);
-      if (formData.message) fd.append('message', formData.message);
+      if (sanitized.phone) fd.append('phone', sanitized.phone);
+      if (sanitized.event) fd.append('event_type', sanitized.event);
+      if (sanitized.guests) fd.append('guest_count', sanitized.guests);
+      if (sanitized.date) fd.append('event_date', sanitized.date);
+      if (sanitized.message) fd.append('message', sanitized.message);
 
       const response = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || 'Failed to submit');
 
+      lastSubmitTime.current = Date.now();
+      submitCount.current += 1;
       setSubmitted(true);
       clearCart();
       setTurnstileToken(null);
@@ -172,14 +242,16 @@ export default function EnquiryForm() {
                       <textarea
                         rows={4}
                         value={formData[field.key]}
-                        onChange={e => setFormData(p => ({ ...p, [field.key]: e.target.value }))}
+                        onChange={e => handleFieldChange(field.key, e.target.value)}
+                        maxLength={MAX_MESSAGE_LENGTH}
                         style={{ ...inputStyle, resize: 'vertical' }}
                       />
                     ) : (
                       <input
                         type={field.type}
                         value={formData[field.key]}
-                        onChange={e => setFormData(p => ({ ...p, [field.key]: e.target.value }))}
+                        onChange={e => handleFieldChange(field.key, e.target.value)}
+                        maxLength={MAX_FIELD_LENGTH}
                         style={inputStyle}
                       />
                     )}
