@@ -35,6 +35,12 @@ const MAX_FIELD_LENGTH = 500;
 const MAX_MESSAGE_LENGTH = 2000;
 const CART_MARKER = 'Selected Items:';
 
+function detectInAppBrowser() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /Instagram|FBAN|FBAV|FB_IAB|Line|Twitter|TikTok/i.test(ua);
+}
+
 function sanitize(str: string): string {
   return str
     .replace(/[<>]/g, '')
@@ -116,6 +122,7 @@ export default function EnquiryForm() {
   const turnstileRef = useRef<TurnstileInstance>(null);
   const lastSubmitTime = useRef(0);
   const submitCount = useRef(0);
+  const isInAppBrowser = detectInAppBrowser();
 
   useEffect(() => {
     const cartNotes = getFormattedNotes();
@@ -141,7 +148,11 @@ export default function EnquiryForm() {
     setError('');
     setIsSubmitting(true);
 
-    if (honeypot) { setIsSubmitting(false); return; }
+    if (honeypot) {
+      setError('Submission blocked.');
+      setIsSubmitting(false);
+      return;
+    }
 
     if (Date.now() - formLoadTime.current < MIN_SUBMISSION_TIME_MS) {
       setError('Please take your time filling out the form.'); setIsSubmitting(false); return;
@@ -158,7 +169,7 @@ export default function EnquiryForm() {
     const validationError = validateFields(formData);
     if (validationError) { setError(validationError); setIsSubmitting(false); return; }
 
-    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+    if (TURNSTILE_SITE_KEY && !isInAppBrowser && !turnstileToken) {
       setError('Please complete the security verification.'); setIsSubmitting(false); return;
     }
 
@@ -180,6 +191,7 @@ export default function EnquiryForm() {
           ...sanitized,
           turnstileToken: turnstileToken || '',
           honeypot,
+          inAppBrowser: isInAppBrowser,
         }),
       });
       const data = await response.json();
@@ -192,7 +204,9 @@ export default function EnquiryForm() {
       setTurnstileToken(null);
       turnstileRef.current?.reset();
     } catch (err) {
-      setError('Failed to submit enquiry. Please try again, open in your browser, or contact us directly on WhatsApp.');
+      const fallback =
+        'Failed to submit enquiry. Please try again, open in your browser, or contact us directly on WhatsApp.';
+      setError(err instanceof Error && err.message ? err.message : fallback);
       console.error('Submission error:', err);
       turnstileRef.current?.reset();
     } finally {
@@ -275,7 +289,7 @@ export default function EnquiryForm() {
                   </div>
                 ))}
 
-                {TURNSTILE_SITE_KEY && (
+                {TURNSTILE_SITE_KEY && !isInAppBrowser && (
                   <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
                     <Turnstile
                       ref={turnstileRef}
@@ -297,7 +311,7 @@ export default function EnquiryForm() {
                 <div style={{ gridColumn: '1 / -1' }}>
                   <button
                     type="submit"
-                    disabled={isSubmitting || (!!TURNSTILE_SITE_KEY && !turnstileToken)}
+                    disabled={isSubmitting || (!!TURNSTILE_SITE_KEY && !isInAppBrowser && !turnstileToken)}
                     style={{
                       width: '100%', background: clr.green, color: clr.cream,
                       border: 'none', padding: '16px', cursor: 'pointer',

@@ -18,6 +18,7 @@ export default async function handler(req, res) {
     message = '',
     turnstileToken = '',
     honeypot = '',
+    inAppBrowser = false,
   } = req.body || {};
 
   if (honeypot) {
@@ -28,35 +29,59 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Name and email are required' });
   }
 
-  try {
-    const fd = new FormData();
-    fd.append('access_key', accessKey);
-    fd.append('name', String(name));
-    fd.append('email', String(email));
-    fd.append('botcheck', '');
-    if (turnstileToken) fd.append('cf-turnstile-response', String(turnstileToken));
-    if (phone) fd.append('phone', String(phone));
-    if (event) fd.append('event_type', String(event));
-    if (guests) fd.append('guest_count', String(guests));
-    if (date) fd.append('event_date', String(date));
-    if (message) fd.append('message', String(message));
+  const postToWeb3Forms = async ({ includeTurnstile }) => {
+    const payload = {
+      access_key: accessKey,
+      name: String(name),
+      email: String(email),
+      botcheck: '',
+      ...(includeTurnstile && turnstileToken ? { 'cf-turnstile-response': String(turnstileToken) } : {}),
+      ...(phone ? { phone: String(phone) } : {}),
+      ...(event ? { event_type: String(event) } : {}),
+      ...(guests ? { guest_count: String(guests) } : {}),
+      ...(date ? { event_date: String(date) } : {}),
+      ...(message ? { message: String(message) } : {}),
+    };
 
     const response = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
-      body: fd,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-    const data = await response.json();
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = { success: false, message: 'Invalid response from forms provider' };
+    }
+
+    return { response, data };
+  };
+
+  try {
+    let { response, data } = await postToWeb3Forms({ includeTurnstile: true });
+
+    const likelyCaptchaIssue =
+      !response.ok ||
+      !data?.success
+        ? /turnstile|captcha|verification/i.test(String(data?.message || ''))
+        : false;
+
+    if ((inAppBrowser || req.headers['user-agent']?.includes('Instagram')) && likelyCaptchaIssue) {
+      ({ response, data } = await postToWeb3Forms({ includeTurnstile: false }));
+    }
 
     if (!response.ok || !data.success) {
       return res.status(502).json({
         success: false,
-        message: data?.message || 'Failed to submit',
+        message: data?.message || 'Failed to submit. Please open in browser or contact via WhatsApp.',
       });
     }
 
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('submit-enquiry API error:', error);
-    return res.status(500).json({ success: false, message: 'Unexpected server error' });
+    return res.status(500).json({ success: false, message: 'Unexpected server error. Check WEB3FORMS_ACCESS_KEY in Vercel.' });
   }
 }
