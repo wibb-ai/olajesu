@@ -45,8 +45,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const getFormattedNotes = () => {
     if (items.length === 0) return '';
-    
-    const grouped = items.reduce((acc, item) => {
+
+    const uniqueItems = items.filter((item, index, arr) => {
+      const key = `${item.dishId}|${item.size}`;
+      return arr.findIndex((x) => `${x.dishId}|${x.size}` === key) === index;
+    });
+
+    const grouped = uniqueItems.reduce((acc, item) => {
       if (!acc[item.dishName]) {
         acc[item.dishName] = [];
       }

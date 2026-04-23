@@ -33,6 +33,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^[+\d\s()-]{7,20}$/;
 const MAX_FIELD_LENGTH = 500;
 const MAX_MESSAGE_LENGTH = 2000;
+const CART_MARKER = 'Selected Items:';
 
 function sanitize(str: string): string {
   return str
@@ -40,6 +41,42 @@ function sanitize(str: string): string {
     .replace(/javascript:/gi, '')
     .replace(/on\w+\s*=/gi, '')
     .trim();
+}
+
+function extractUserNotes(rawMessage: string): string {
+  if (!rawMessage.includes(CART_MARKER)) return rawMessage.trim();
+
+  const markerIndex = rawMessage.indexOf(CART_MARKER);
+  const beforeMarker = rawMessage.slice(0, markerIndex).trim();
+  const fromMarker = rawMessage.slice(markerIndex);
+  const lines = fromMarker.split('\n');
+
+  let i = 1;
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    if (!trimmed) {
+      i += 1;
+      continue;
+    }
+
+    if (/^[^:\n]+:$/.test(trimmed)) {
+      i += 1;
+      continue;
+    }
+
+    if (/^-\s+/.test(trimmed)) {
+      i += 1;
+      continue;
+    }
+
+    break;
+  }
+
+  const cartBlock = lines.slice(0, i).join('\n');
+  const afterCart = fromMarker.slice(cartBlock.length).trim();
+
+  return [beforeMarker, afterCart].filter(Boolean).join('\n\n');
 }
 
 function validateFields(data: Record<string, string>): string | null {
@@ -83,24 +120,11 @@ export default function EnquiryForm() {
   useEffect(() => {
     const cartNotes = getFormattedNotes();
     const currentValue = formData.message || '';
+    const userNotes = extractUserNotes(currentValue);
 
-    const cartMarker = 'Selected Items:';
-    const markerIndex = currentValue.indexOf(cartMarker);
-
-    let userNotes = '';
-    if (markerIndex > -1) {
-      const afterCart = currentValue.indexOf('\n\n', markerIndex);
-      userNotes = afterCart > -1 ? currentValue.substring(afterCart + 2).trim() : '';
-    } else {
-      userNotes = currentValue;
-    }
-
-    let newValue: string;
-    if (cartNotes) {
-      newValue = cartNotes + (userNotes ? '\n\n' + userNotes : '');
-    } else {
-      newValue = userNotes;
-    }
+    const newValue = cartNotes
+      ? cartNotes + (userNotes ? '\n\n' + userNotes : '')
+      : userNotes;
 
     if (newValue !== currentValue) {
       setFormData(p => ({ ...p, message: newValue }));
