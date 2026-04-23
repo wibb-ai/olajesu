@@ -6,7 +6,6 @@ import { AnimatedSection } from '../utils/animation';
 import { businessConfig } from '../config/businessConfig';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
-const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '';
 const MIN_SUBMISSION_TIME_MS = 3000;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
 const MAX_SUBMISSIONS_PER_SESSION = 5;
@@ -178,12 +177,6 @@ export default function EnquiryForm() {
     }
 
     try {
-      if (!WEB3FORMS_ACCESS_KEY) {
-        setError('Form is not configured. Please contact us on WhatsApp.');
-        setIsSubmitting(false);
-        return;
-      }
-
       const sanitized = {
         name: sanitize(formData.name),
         email: sanitize(formData.email),
@@ -194,25 +187,32 @@ export default function EnquiryForm() {
         message: sanitize(formData.message),
       };
 
-      // Web3Forms only officially supports browser POSTs on the free plan; server-side
-      // (Vercel) is blocked without paid IP allowlisting — see https://docs.web3forms.com/getting-started/api-reference
-      const fd = new FormData();
-      fd.append('access_key', WEB3FORMS_ACCESS_KEY);
-      fd.append('subject', 'Catering enquiry — OlaJesu');
-      fd.append('from_name', 'OlaJesu website');
-      fd.append('name', sanitized.name);
-      fd.append('email', sanitized.email);
-      fd.append('botcheck', '');
-      if (turnstileToken) fd.append('cf-turnstile-response', turnstileToken);
-      if (sanitized.phone) fd.append('phone', sanitized.phone);
-      if (sanitized.event) fd.append('event_type', sanitized.event);
-      if (sanitized.guests) fd.append('guest_count', sanitized.guests);
-      if (sanitized.date) fd.append('event_date', sanitized.date);
-      if (sanitized.message) fd.append('message', sanitized.message);
+      const response = await fetch('/api/catering-enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: sanitized.name,
+          email: sanitized.email,
+          phone: sanitized.phone,
+          event: sanitized.event,
+          guests: sanitized.guests,
+          date: sanitized.date,
+          message: sanitized.message,
+          turnstileToken: turnstileToken || '',
+          honeypot,
+          inAppBrowser: isInAppBrowser,
+        }),
+      });
 
-      const response = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || 'Failed to submit');
+      let data: { success?: boolean; message?: string } = {};
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error('Server error. Please try again or WhatsApp us.');
+      }
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to submit');
+      }
 
       lastSubmitTime.current = Date.now();
       submitCount.current += 1;
