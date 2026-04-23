@@ -3,8 +3,10 @@ import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import { useCart } from '../context/CartContext';
 import CartSummary from './CartSummary';
 import { AnimatedSection } from '../utils/animation';
+import { businessConfig } from '../config/businessConfig';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '';
 const MIN_SUBMISSION_TIME_MS = 3000;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
 const MAX_SUBMISSIONS_PER_SESSION = 5;
@@ -123,6 +125,8 @@ export default function EnquiryForm() {
   const lastSubmitTime = useRef(0);
   const submitCount = useRef(0);
   const isInAppBrowser = detectInAppBrowser();
+  const waPhone = businessConfig.contact.phone.replace(/\s/g, '').replace('+', '');
+  const waEnquiryLink = `https://wa.me/${waPhone}?text=${encodeURIComponent('Hi OlaJesu, I would like a catering quote.')}`;
 
   useEffect(() => {
     const cartNotes = getFormattedNotes();
@@ -174,6 +178,12 @@ export default function EnquiryForm() {
     }
 
     try {
+      if (!WEB3FORMS_ACCESS_KEY) {
+        setError('Form is not configured. Please contact us on WhatsApp.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const sanitized = {
         name: sanitize(formData.name),
         email: sanitize(formData.email),
@@ -184,16 +194,23 @@ export default function EnquiryForm() {
         message: sanitize(formData.message),
       };
 
-      const response = await fetch('/api/submit-enquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...sanitized,
-          turnstileToken: turnstileToken || '',
-          honeypot,
-          inAppBrowser: isInAppBrowser,
-        }),
-      });
+      // Web3Forms only officially supports browser POSTs on the free plan; server-side
+      // (Vercel) is blocked without paid IP allowlisting — see https://docs.web3forms.com/getting-started/api-reference
+      const fd = new FormData();
+      fd.append('access_key', WEB3FORMS_ACCESS_KEY);
+      fd.append('subject', 'Catering enquiry — OlaJesu');
+      fd.append('from_name', 'OlaJesu website');
+      fd.append('name', sanitized.name);
+      fd.append('email', sanitized.email);
+      fd.append('botcheck', '');
+      if (turnstileToken) fd.append('cf-turnstile-response', turnstileToken);
+      if (sanitized.phone) fd.append('phone', sanitized.phone);
+      if (sanitized.event) fd.append('event_type', sanitized.event);
+      if (sanitized.guests) fd.append('guest_count', sanitized.guests);
+      if (sanitized.date) fd.append('event_date', sanitized.date);
+      if (sanitized.message) fd.append('message', sanitized.message);
+
+      const response = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || 'Failed to submit');
 
@@ -205,7 +222,7 @@ export default function EnquiryForm() {
       turnstileRef.current?.reset();
     } catch (err) {
       const fallback =
-        'Failed to submit enquiry. Please try again, open in your browser, or contact us directly on WhatsApp.';
+        'Failed to submit enquiry. Open this page in Safari or Chrome, or message us on WhatsApp.';
       setError(err instanceof Error && err.message ? err.message : fallback);
       console.error('Submission error:', err);
       turnstileRef.current?.reset();
@@ -255,6 +272,19 @@ export default function EnquiryForm() {
           </AnimatedSection>
         ) : (
           <AnimatedSection delay={0.1}>
+            {isInAppBrowser && (
+              <div style={{
+                marginBottom: '20px', padding: '16px 18px',
+                background: '#F0EAD9', border: `1px solid ${clr.border}`, borderRadius: '2px',
+                fontFamily: 'sans-serif', fontSize: '13px', color: clr.muted, lineHeight: 1.7,
+              }}>
+                <strong style={{ color: '#1A1A1A' }}>Using Instagram or Facebook?</strong>
+                {' '}If the form does not send, open this page in your phone’s browser (menu → Open in browser), or{' '}
+                <a href={waEnquiryLink} target="_blank" rel="noopener noreferrer" style={{ color: clr.green }}>message us on WhatsApp</a>
+                .
+              </div>
+            )}
+
             <CartSummary />
 
             <form onSubmit={handleSubmit}>
