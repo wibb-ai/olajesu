@@ -163,9 +163,6 @@ export default function EnquiryForm() {
     }
 
     try {
-      const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
-      if (!accessKey) throw new Error('Web3Forms access key is not configured');
-
       const sanitized = {
         name: sanitize(formData.name),
         email: sanitize(formData.email),
@@ -176,19 +173,15 @@ export default function EnquiryForm() {
         message: sanitize(formData.message),
       };
 
-      const fd = new FormData();
-      fd.append('access_key', accessKey);
-      fd.append('name', sanitized.name);
-      fd.append('email', sanitized.email);
-      fd.append('botcheck', '');
-      if (turnstileToken) fd.append('cf-turnstile-response', turnstileToken);
-      if (sanitized.phone) fd.append('phone', sanitized.phone);
-      if (sanitized.event) fd.append('event_type', sanitized.event);
-      if (sanitized.guests) fd.append('guest_count', sanitized.guests);
-      if (sanitized.date) fd.append('event_date', sanitized.date);
-      if (sanitized.message) fd.append('message', sanitized.message);
-
-      const response = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
+      const response = await fetch('/api/submit-enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...sanitized,
+          turnstileToken: turnstileToken || '',
+          honeypot,
+        }),
+      });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || 'Failed to submit');
 
@@ -199,7 +192,7 @@ export default function EnquiryForm() {
       setTurnstileToken(null);
       turnstileRef.current?.reset();
     } catch (err) {
-      setError('Failed to submit enquiry. Please try again or contact us directly.');
+      setError('Failed to submit enquiry. Please try again, open in your browser, or contact us directly on WhatsApp.');
       console.error('Submission error:', err);
       turnstileRef.current?.reset();
     } finally {
