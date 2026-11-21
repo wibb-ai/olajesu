@@ -5,6 +5,9 @@ import CateringMenu from '../components/CateringMenu';
 import CateringHero from '../components/CateringHero';
 import { CartProvider } from '../context/CartContext';
 import { AnimatedSection } from '../utils/animation';
+import { whatsappLink } from '../config/businessConfig';
+
+const whatsappOffersLink = whatsappLink('I want offers from OlaJesu');
 
 const c = {
   card: '#EDE6D3',
@@ -25,9 +28,9 @@ function Tag({ children, color = '#1B4332' }: { children: React.ReactNode; color
 }
 
 const whyUs = [
-  { title: 'Authentic Heritage', body: 'Every recipe carries the soul of Nigerian cooking no shortcuts, no compromises.' },
+  { title: 'Authentic Heritage', body: 'Every recipe carries the soul of Nigerian cooking. No shortcuts, no compromises.' },
   { title: 'Flexible Service', body: 'From quick weeknight orders to full event catering. We move at your pace.' },
-  { title: 'Trusted Reputation', body: '4.1 stars and climbing real reviews from real customers across Manchester.' },
+  { title: 'Trusted Reputation', body: '4.1 stars and climbing, with real reviews from real customers across Manchester.' },
 ];
 
 export default function CateringPage() {
@@ -54,7 +57,7 @@ export default function CateringPage() {
               </div>
               <div style={{ flex: '2', minWidth: '260px' }}>
                 <p style={{ fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.8, color: 'rgba(26,26,26,0.6)', margin: '0 0 16px' }}>
-                  OlaJesu was built on a simple belief  authentic Nigerian food deserves to be accessible to everyone in Manchester. We bring the same quality and care to every delivery as you'd find at a family table in Lagos.
+                  OlaJesu was built on a simple belief: authentic Nigerian food deserves to be accessible to everyone in Manchester. We bring the same quality and care to every delivery as you'd find at a family table in Lagos.
                 </p>
                 <p style={{ fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.8, color: 'rgba(26,26,26,0.6)', margin: 0 }}>
                   Every dish is made fresh in our Manchester kitchen. No shortcuts. No compromises. Just food that carries the flavour of home.
@@ -111,9 +114,9 @@ export default function CateringPage() {
                   <span style={{ fontStyle: 'italic', color: '#1B4332' }}>Join our WhatsApp list.</span>
                 </h3>
                 <p style={{ fontFamily: 'sans-serif', fontSize: '14px', color: c.muted, margin: 0, lineHeight: 1.7 }}>
-                  Weekly specials, new dishes, and first access to The Jollof Box launch  sent directly to your WhatsApp. No spam. Unsubscribe any time.
+                  Weekly specials, new dishes, and first access to The Jollof Box launch, sent directly to your WhatsApp. No spam. Unsubscribe any time.
                 </p>
-                <a href="https://wa.me/447456272712?text=I%20want%20offers%20from%20OlaJesu" target="_blank" rel="noopener noreferrer" style={{
+                <a href={whatsappOffersLink} target="_blank" rel="noopener noreferrer" style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   background: '#25D366', color: '#FFFFFF', padding: '14px 28px',
                   textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px',

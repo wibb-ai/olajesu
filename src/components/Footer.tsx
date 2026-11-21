@@ -1,4 +1,4 @@
-import { businessConfig } from '../config/businessConfig';
+import { businessConfig, whatsappLink } from '../config/businessConfig';
 
 const c = {
   border: '#DDD6C4',
@@ -37,7 +37,7 @@ export default function Footer() {
                 <a href="#" style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}>Instagram</a>
               )}
               <a
-                href={`https://wa.me/${contact.phone.replace(/\s/g, '').replace('+', '')}`}
+                href={whatsappLink()}
                 target="_blank" rel="noopener noreferrer"
                 style={{ color: c.muted, textDecoration: 'none', fontFamily: 'sans-serif', fontSize: '13px' }}
               >

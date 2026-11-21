@@ -3,7 +3,7 @@ import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import { useCart } from '../context/CartContext';
 import CartSummary from './CartSummary';
 import { AnimatedSection } from '../utils/animation';
-import { businessConfig } from '../config/businessConfig';
+import { whatsappLink } from '../config/businessConfig';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 const MIN_SUBMISSION_TIME_MS = 3000;
@@ -124,21 +124,18 @@ export default function EnquiryForm() {
   const lastSubmitTime = useRef(0);
   const submitCount = useRef(0);
   const isInAppBrowser = detectInAppBrowser();
-  const waPhone = businessConfig.contact.phone.replace(/\s/g, '').replace('+', '');
-  const waEnquiryLink = `https://wa.me/${waPhone}?text=${encodeURIComponent('Hi OlaJesu, I would like a catering quote.')}`;
+  const waEnquiryLink = whatsappLink('Hi OlaJesu, I would like a catering quote.');
 
   useEffect(() => {
     const cartNotes = getFormattedNotes();
-    const currentValue = formData.message || '';
-    const userNotes = extractUserNotes(currentValue);
-
-    const newValue = cartNotes
-      ? cartNotes + (userNotes ? '\n\n' + userNotes : '')
-      : userNotes;
-
-    if (newValue !== currentValue) {
-      setFormData(p => ({ ...p, message: newValue }));
-    }
+    setFormData(p => {
+      const currentValue = p.message || '';
+      const userNotes = extractUserNotes(currentValue);
+      const newValue = cartNotes
+        ? cartNotes + (userNotes ? '\n\n' + userNotes : '')
+        : userNotes;
+      return newValue === currentValue ? p : { ...p, message: newValue };
+    });
   }, [items, getFormattedNotes]);
 
   const handleFieldChange = useCallback((key: string, raw: string) => {
@@ -200,7 +197,6 @@ export default function EnquiryForm() {
           message: sanitized.message,
           turnstileToken: turnstileToken || '',
           honeypot,
-          inAppBrowser: isInAppBrowser,
         }),
       });
 
@@ -232,13 +228,13 @@ export default function EnquiryForm() {
   };
 
   const fields = [
-    { key: 'name', label: 'Full Name', type: 'text', span: false },
-    { key: 'email', label: 'Email Address', type: 'email', span: false },
-    { key: 'phone', label: 'Phone Number', type: 'tel', span: false },
-    { key: 'event', label: 'Event Type', type: 'text', span: false },
-    { key: 'guests', label: 'Number of Guests', type: 'number', span: false },
-    { key: 'date', label: 'Event Date', type: 'date', span: false },
-    { key: 'message', label: 'Additional Details', type: 'textarea', span: true },
+    { key: 'name', label: 'Full Name', type: 'text', span: false, autoComplete: 'name' },
+    { key: 'email', label: 'Email Address', type: 'email', span: false, autoComplete: 'email' },
+    { key: 'phone', label: 'Phone Number', type: 'tel', span: false, autoComplete: 'tel' },
+    { key: 'event', label: 'Event Type', type: 'text', span: false, autoComplete: 'off' },
+    { key: 'guests', label: 'Number of Guests', type: 'number', span: false, autoComplete: 'off' },
+    { key: 'date', label: 'Event Date', type: 'date', span: false, autoComplete: 'off' },
+    { key: 'message', label: 'Additional Details', type: 'textarea', span: true, autoComplete: 'off' },
   ] as const;
 
   return (
@@ -298,9 +294,11 @@ export default function EnquiryForm() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 {fields.map(field => (
                   <div key={field.key} style={{ gridColumn: field.span ? '1 / -1' : 'auto' }}>
-                    <label style={labelStyle}>{field.label}</label>
+                    <label htmlFor={`enquiry-${field.key}`} style={labelStyle}>{field.label}</label>
                     {field.type === 'textarea' ? (
                       <textarea
+                        id={`enquiry-${field.key}`}
+                        name={field.key}
                         rows={4}
                         value={formData[field.key]}
                         onChange={e => handleFieldChange(field.key, e.target.value)}
@@ -309,6 +307,9 @@ export default function EnquiryForm() {
                       />
                     ) : (
                       <input
+                        id={`enquiry-${field.key}`}
+                        name={field.key}
+                        autoComplete={field.autoComplete}
                         type={field.type}
                         value={formData[field.key]}
                         onChange={e => handleFieldChange(field.key, e.target.value)}

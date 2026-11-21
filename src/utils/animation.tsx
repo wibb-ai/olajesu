@@ -10,7 +10,7 @@ export function useInView(threshold = 0.15) {
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
-  }, []);
+  }, [threshold]);
   return [ref, inView] as const;
 }
 

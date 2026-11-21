@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "/catering", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/" }
   ],

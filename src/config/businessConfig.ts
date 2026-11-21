@@ -3,6 +3,12 @@
  * Update these values with your actual business information
  */
 
+/** Build a wa.me link to the business number, optionally with a prefilled message. */
+export function whatsappLink(text?: string): string {
+  const number = businessConfig.contact.phone.replace(/[^\d]/g, '');
+  return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
 export const businessConfig = {
   // Contact Information
   contact: {

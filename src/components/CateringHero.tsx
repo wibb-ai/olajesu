@@ -68,7 +68,7 @@ export default function CateringHero() {
           fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.7,
           color: 'rgba(26,26,26,0.6)', margin: '0 0 40px', maxWidth: '420px',
         }}>
-          Authentic Nigerian cuisine  cooked from scratch, delivered to your door in less than 60 minutes. From Jollof Rice to Egusi Soup, this is the real thing.
+          Authentic Nigerian cuisine, cooked from scratch, delivered to your door in less than 60 minutes. From Jollof Rice to Egusi Soup, this is the real thing.
         </p>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
