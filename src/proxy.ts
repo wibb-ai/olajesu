@@ -6,12 +6,20 @@ import { NextRequest, NextResponse } from 'next/server';
  * load Vercel Analytics and Cloudflare Turnstile. Inline style attributes are used
  * throughout the site, so style-src keeps 'unsafe-inline'.
  */
+
+// Payload's admin sets its light/dark theme with one inline script that carries no
+// nonce. Allow exactly that script by hash on /admin. If a Payload upgrade changes it,
+// the browser console shows the new hash; the only effect meanwhile is a brief flash
+// of the wrong theme.
+const PAYLOAD_THEME_SCRIPT_HASH = "'sha256-eW4XVtkvWTCtmjlnNAPE5rZMcNdfXCcVtmT7b4zs/SM='";
+
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
+  const isAdmin = request.nextUrl.pathname.startsWith('/admin');
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://va.vercel-scripts.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isAdmin ? ` ${PAYLOAD_THEME_SCRIPT_HASH}` : ''} https://va.vercel-scripts.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",

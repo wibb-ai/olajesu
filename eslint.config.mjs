@@ -5,7 +5,7 @@ import nextTs from 'eslint-config-next/typescript';
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores(['.next/**', 'out/**', 'next-env.d.ts', '.claude/**', '.scratch/**']),
+  globalIgnores(['.next/**', 'out/**', 'next-env.d.ts', '.claude/**', '.scratch/**', 'src/migrations/**', 'src/payload-types.ts', 'src/app/(payload)/**']),
   {
     rules: {
       // Plain <img> keeps the current look exactly; revisit next/image when pages are redesigned.
