@@ -1,8 +1,8 @@
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import EnquiryForm from '../components/EnquiryForm';
-import CateringMenu from '../components/CateringMenu';
-import CateringHero from '../components/CateringHero';
+import Navbar from './Navbar';
+import Footer from './Footer';
+import EnquiryForm from './EnquiryForm';
+import CateringMenu from './CateringMenu';
+import CateringHero from './CateringHero';
 import { CartProvider } from '../context/CartContext';
 import { AnimatedSection } from '../utils/animation';
 import { whatsappLink } from '../config/businessConfig';
@@ -57,7 +57,7 @@ export default function CateringPage() {
               </div>
               <div style={{ flex: '2', minWidth: '260px' }}>
                 <p style={{ fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.8, color: 'rgba(26,26,26,0.6)', margin: '0 0 16px' }}>
-                  OlaJesu was built on a simple belief: authentic Nigerian food deserves to be accessible to everyone in Manchester. We bring the same quality and care to every delivery as you'd find at a family table in Lagos.
+                  OlaJesu was built on a simple belief: authentic Nigerian food deserves to be accessible to everyone in Manchester. We bring the same quality and care to every delivery as you&apos;d find at a family table in Lagos.
                 </p>
                 <p style={{ fontFamily: 'sans-serif', fontSize: '15px', lineHeight: 1.8, color: 'rgba(26,26,26,0.6)', margin: 0 }}>
                   Every dish is made fresh in our Manchester kitchen. No shortcuts. No compromises. Just food that carries the flavour of home.

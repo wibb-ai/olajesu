@@ -1,7 +1,7 @@
 /**
- * Vercel serverless: send catering enquiries via Resend (reliable in Instagram in-app browser).
+ * Send catering enquiries via Resend (reliable in the Instagram in-app browser).
  * Env: RESEND_API_KEY, ENQUIRY_TO_EMAIL, EMAIL_FROM
- * Optional: TURNSTILE_SECRET_KEY — when set, a valid Turnstile token is required,
+ * Optional: TURNSTILE_SECRET_KEY. When set, a valid Turnstile token is required,
  * except for requests whose User-Agent is a social in-app browser (Turnstile is not shown there).
  */
 
@@ -11,23 +11,26 @@ const IN_APP_UA_RE = /Instagram|FBAN|FBAV|FB_IAB|Line|Twitter|TikTok/i;
 const MAX_FIELD_LENGTH = 500;
 const MAX_MESSAGE_LENGTH = 2000;
 
-function json(req) {
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch {
-      return null;
-    }
-  }
-  return req.body && typeof req.body === 'object' ? req.body : null;
+type Enquiry = {
+  name: string;
+  email: string;
+  phone: string;
+  event: string;
+  guests: string;
+  date: string;
+  message: string;
+};
+
+function reply(status: number, body: Record<string, unknown>) {
+  return Response.json(body, { status });
 }
 
 /** Coerce to a single-line trimmed string, capped in length. */
-function field(value, max = MAX_FIELD_LENGTH) {
+function field(value: unknown, max = MAX_FIELD_LENGTH) {
   return String(value ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, max);
 }
 
-async function verifyTurnstile(token, secret, ip) {
+async function verifyTurnstile(token: string, secret: string, ip: string) {
   if (!token || !secret) return false;
   const params = new URLSearchParams({ secret, response: token });
   if (ip) params.set('remoteip', ip);
@@ -45,7 +48,7 @@ async function verifyTurnstile(token, secret, ip) {
   }
 }
 
-function validate({ name, email, phone, guests, message }) {
+function validate({ name, email, phone, guests, message }: Enquiry) {
   if (name.length < 2) return 'Please enter your full name.';
   if (!email || !EMAIL_RE.test(email)) return 'Please enter a valid email address.';
   if (phone && !PHONE_RE.test(phone)) return 'Please enter a valid phone number.';
@@ -57,20 +60,21 @@ function validate({ name, email, phone, guests, message }) {
   return null;
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+export async function POST(request: Request) {
+  let body: Record<string, unknown> = {};
+  try {
+    const parsed = await request.json();
+    if (parsed && typeof parsed === 'object') body = parsed;
+  } catch {
+    // Treat an unreadable body as empty; validation rejects it below.
   }
-
-  const body = json(req) || {};
 
   // Honeypot: pretend success so bots don't learn they were filtered.
   if (body.honeypot) {
-    return res.status(200).json({ success: true });
+    return reply(200, { success: true });
   }
 
-  const data = {
+  const data: Enquiry = {
     name: field(body.name),
     email: field(body.email),
     phone: field(body.phone, 30),
@@ -82,16 +86,16 @@ export default async function handler(req, res) {
 
   const validationError = validate(data);
   if (validationError) {
-    return res.status(400).json({ success: false, message: validationError });
+    return reply(400, { success: false, message: validationError });
   }
 
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-  const isInAppBrowser = IN_APP_UA_RE.test(req.headers['user-agent'] || '');
+  const isInAppBrowser = IN_APP_UA_RE.test(request.headers.get('user-agent') || '');
   if (turnstileSecret && !isInAppBrowser) {
-    const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
     const ok = await verifyTurnstile(field(body.turnstileToken, 2048), turnstileSecret, ip);
     if (!ok) {
-      return res.status(400).json({ success: false, message: 'Security check failed. Please try again.' });
+      return reply(400, { success: false, message: 'Security check failed. Please try again.' });
     }
   }
 
@@ -99,7 +103,7 @@ export default async function handler(req, res) {
   const to = process.env.ENQUIRY_TO_EMAIL;
   if (!apiKey || !to) {
     console.error('catering-enquiry: missing env', { RESEND_API_KEY: !!apiKey, ENQUIRY_TO_EMAIL: !!to });
-    return res.status(500).json({
+    return reply(500, {
       success: false,
       message: 'Our enquiry form is temporarily unavailable. Please message us on WhatsApp.',
     });
@@ -116,7 +120,7 @@ export default async function handler(req, res) {
   if (data.event) lines.push(`Event: ${data.event}`);
   if (data.guests) lines.push(`Guests: ${data.guests}`);
   if (data.date) lines.push(`Date: ${data.date}`);
-  if (isInAppBrowser) lines.push('(Sent from an in-app browser — no security check)');
+  if (isInAppBrowser) lines.push('(Sent from an in-app browser, no security check)');
   if (data.message) lines.push('', 'Details:', data.message);
 
   try {
@@ -138,15 +142,15 @@ export default async function handler(req, res) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       console.error('catering-enquiry: resend error', response.status, result);
-      return res.status(502).json({
+      return reply(502, {
         success: false,
         message: 'We could not send your enquiry. Please try again or message us on WhatsApp.',
       });
     }
 
-    return res.status(200).json({ success: true, id: result.id });
+    return reply(200, { success: true, id: result.id });
   } catch (e) {
     console.error('catering-enquiry', e);
-    return res.status(500).json({ success: false, message: 'Server error sending email' });
+    return reply(500, { success: false, message: 'Server error sending email' });
   }
 }

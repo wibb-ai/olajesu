@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+'use client';
+
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore, FormEvent } from 'react';
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import { useCart } from '../context/CartContext';
 import CartSummary from './CartSummary';
 import { AnimatedSection } from '../utils/animation';
 import { whatsappLink } from '../config/businessConfig';
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 const MIN_SUBMISSION_TIME_MS = 3000;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
 const MAX_SUBMISSIONS_PER_SESSION = 5;
@@ -37,9 +39,15 @@ const MAX_MESSAGE_LENGTH = 2000;
 const CART_MARKER = 'Selected Items:';
 
 function detectInAppBrowser() {
-  if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent || '';
   return /Instagram|FBAN|FBAV|FB_IAB|Line|Twitter|TikTok/i.test(ua);
+}
+
+const noSubscribe = () => () => {};
+
+/** False during server rendering and hydration, then the real answer in the browser. */
+function useInAppBrowser() {
+  return useSyncExternalStore(noSubscribe, detectInAppBrowser, () => false);
 }
 
 function sanitize(str: string): string {
@@ -110,7 +118,7 @@ function validateFields(data: Record<string, string>): string | null {
 }
 
 export default function EnquiryForm() {
-  const { items, getFormattedNotes, clearCart } = useCart();
+  const { getFormattedNotes, clearCart } = useCart();
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', event: '', guests: '', date: '', message: '',
   });
@@ -119,15 +127,23 @@ export default function EnquiryForm() {
   const [error, setError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
-  const formLoadTime = useRef(Date.now());
+  const formLoadTime = useRef(0);
   const turnstileRef = useRef<TurnstileInstance>(null);
   const lastSubmitTime = useRef(0);
   const submitCount = useRef(0);
-  const isInAppBrowser = detectInAppBrowser();
+  const isInAppBrowser = useInAppBrowser();
   const waEnquiryLink = whatsappLink('Hi OlaJesu, I would like a catering quote.');
 
   useEffect(() => {
-    const cartNotes = getFormattedNotes();
+    formLoadTime.current = Date.now();
+  }, []);
+
+  // Keep the cart summary at the top of the message in step with the cart,
+  // preserving whatever the customer typed below it.
+  const cartNotes = getFormattedNotes();
+  const [syncedCartNotes, setSyncedCartNotes] = useState('');
+  if (cartNotes !== syncedCartNotes) {
+    setSyncedCartNotes(cartNotes);
     setFormData(p => {
       const currentValue = p.message || '';
       const userNotes = extractUserNotes(currentValue);
@@ -136,7 +152,7 @@ export default function EnquiryForm() {
         : userNotes;
       return newValue === currentValue ? p : { ...p, message: newValue };
     });
-  }, [items, getFormattedNotes]);
+  }
 
   const handleFieldChange = useCallback((key: string, raw: string) => {
     const value = key === 'message' ? raw : sanitize(raw);
@@ -263,7 +279,7 @@ export default function EnquiryForm() {
             }}>
               <div style={{ fontSize: '40px', marginBottom: '16px' }}>✅</div>
               <h3 style={{ fontFamily: "'Georgia', serif", fontSize: '24px', color: '#1A1A1A', margin: '0 0 12px' }}>Quote Request Received</h3>
-              <p style={{ fontFamily: 'sans-serif', fontSize: '14px', color: clr.muted }}>We'll be in touch within 24 hours.</p>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '14px', color: clr.muted }}>We&apos;ll be in touch within 24 hours.</p>
             </div>
           </AnimatedSection>
         ) : (

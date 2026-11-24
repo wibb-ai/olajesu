@@ -12,8 +12,8 @@ export function whatsappLink(text?: string): string {
 export const businessConfig = {
   // Contact Information
   contact: {
-    phone: import.meta.env.VITE_BUSINESS_PHONE || '+44 7456272712', // TODO: Replace with actual phone number
-    email: import.meta.env.VITE_BUSINESS_EMAIL || 'olajesu2005@gmail.com', // TODO: Replace with actual email
+    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || '+44 7456272712', // TODO: Replace with actual phone number
+    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'olajesu2005@gmail.com', // TODO: Replace with actual email
     address: {
       street: '20-22 Mary Street',
       city: 'Manchester',
@@ -26,12 +26,12 @@ export const businessConfig = {
   ordering: {
     uberEats: {
       enabled: true,
-      url: import.meta.env.VITE_UBER_EATS_URL || '', // TODO: Add your Uber Eats store URL
+      url: process.env.NEXT_PUBLIC_UBER_EATS_URL || '', // TODO: Add your Uber Eats store URL
       label: 'Order on Uber Eats'
     },
     justEat: {
       enabled: true,
-      url: import.meta.env.VITE_JUST_EAT_URL || '', // TODO: Add your Just Eat store URL
+      url: process.env.NEXT_PUBLIC_JUST_EAT_URL || '', // TODO: Add your Just Eat store URL
       label: 'Order on Just Eat'
     },
     directCall: {
@@ -66,9 +66,9 @@ export const businessConfig = {
 
   // Social Media (optional)
   social: {
-    facebook: import.meta.env.VITE_FACEBOOK_URL || '',
-    instagram: import.meta.env.VITE_INSTAGRAM_URL || '',
-    googleBusiness: import.meta.env.VITE_GOOGLE_BUSINESS_URL || ''
+    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || '',
+    instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || '',
+    googleBusiness: process.env.NEXT_PUBLIC_GOOGLE_BUSINESS_URL || ''
   }
 };
 

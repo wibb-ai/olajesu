@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { cateringMenu, categories, CateringDish } from '../data/cateringMenu';
 import { useCart } from '../context/CartContext';
