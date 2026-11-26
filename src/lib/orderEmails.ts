@@ -27,6 +27,8 @@ async function settings(payload: Payload, req?: PayloadRequest): Promise<Setting
   return payload.findGlobal({ slug: 'kitchen-settings', overrideAccess: true, depth: 0, req });
 }
 const kitchenInbox = (s: Settings) => s.kitchenInbox || process.env.ENQUIRY_TO_EMAIL || businessConfig.contact.email;
+/** The Kitchen inbox, for emails sent from outside this file. */
+export const kitchenInboxFor = async (payload: Payload) => kitchenInbox(await settings(payload));
 
 const { business, contact } = businessConfig;
 const businessFooter = () =>
@@ -45,10 +47,11 @@ function distinctMeals(items: OrderItem[]) {
 }
 
 const orderLink = (o: Order) => (o.accessToken ? `${site()}/order/${o.id}/confirmed?t=${o.accessToken}` : site());
+export const cancelLink = (o: Order) => (o.accessToken ? `${site()}/order/${o.id}/cancel?t=${o.accessToken}` : site());
 const short = (day: string) => day.slice(0, 3);
 
 const cancelNotice = () =>
-  `Changed your plans? You can cancel for a full refund until the order cut-off (${DELIVERY_PLACEHOLDER.cutoffLabel} before delivery). Just reply to this email with your Order number. After the cut-off we've started cooking, so we can't cancel: fresh food isn't covered by the legal 14-day right to cancel.`;
+  `Changed your plans? You can cancel for a full refund until the order cut-off (${DELIVERY_PLACEHOLDER.cutoffLabel} before delivery), using the link in this email. After the cut-off we've started cooking, so we can't cancel: fresh food isn't covered by the legal 14-day right to cancel.`;
 const problemNotice = `Something not right? Reply within 24 hours of delivery, with a photo if you can, and we'll put it right with a refund or a replacement.`;
 
 /** The Order table: each single Meal or Pack, Pack savings and the total paid. */
@@ -89,7 +92,7 @@ export function confirmationEmail(order: Order, s: Settings) {
         ? card(para(`<b>${e(day)}</b><br>${e(order.deliveryAddress).replace(/\n/g, '<br>')}`, { margin: '0 0 12px' }), { eyebrow: 'Delivery', heading: "Where it's going" })
         : '',
       darkPanel('What happens next', 'From our kitchen to your fridge', [
-        [short(DELIVERY_PLACEHOLDER.cutoffLabel), 'Change of plan?', `Cancel for a full refund until ${e(DELIVERY_PLACEHOLDER.cutoffLabel)}. Just reply to this email.`],
+        [short(DELIVERY_PLACEHOLDER.cutoffLabel), 'Change of plan?', `Cancel for a full refund until ${e(DELIVERY_PLACEHOLDER.cutoffLabel)}. <a href="${e(cancelLink(order))}" style="color:${C.amber};">Cancel my Order</a>`],
         [short(weekday(order.deliveryDate)), 'Delivered chilled', 'Pop your Meals straight in the fridge and eat them by the use-by date on the label.'],
         ['Minutes', 'Heat, eat, feel at home', 'Reheat until piping hot all the way through. Instructions are on every label.'],
       ]),
@@ -99,7 +102,12 @@ export function confirmationEmail(order: Order, s: Settings) {
           .join('') + para(muted('Full ingredients, with allergens in bold, are on each Meal’s page and on every label.'), { margin: '0 0 12px' }),
         { eyebrow: 'Allergens', heading: "What's in your Meals" },
       ),
-      card(para(e(cancelNotice()), { size: 14 }) + para(e(problemNotice), { size: 14, margin: '0 0 12px' }), { eyebrow: 'Good to know', heading: 'Cancelling and problems' }),
+      card(
+        para(e(cancelNotice()), { size: 14 }) +
+          para(`<a href="${e(cancelLink(order))}" style="color:${C.green};font-weight:700;">Cancel my Order</a>`, { size: 14 }) +
+          para(e(problemNotice), { size: 14, margin: '0 0 12px' }),
+        { eyebrow: 'Good to know', heading: 'Cancelling and problems' },
+      ),
     ].join(''),
     footer: businessFooter(),
   });
@@ -118,6 +126,7 @@ export function confirmationEmail(order: Order, s: Settings) {
     'Full ingredients are on each Meal’s page and on every label.',
     '\nCANCELLING AND PROBLEMS',
     cancelNotice(),
+    `Cancel my Order: ${cancelLink(order)}`,
     problemNotice,
     `\nView your Order: ${orderLink(order)}`,
     `\n"Food that carries the flavour of home." The OlaJesu kitchen, Manchester`,

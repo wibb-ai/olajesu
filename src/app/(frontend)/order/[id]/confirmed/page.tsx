@@ -15,6 +15,7 @@ import { businessConfig } from '../../../../../config/businessConfig';
 import { getMenu } from '../../../../../lib/menu';
 import { afterPaid } from '../../../../../lib/afterPaid';
 import { markPaidFromSession, type OrderItem } from '../../../../../lib/orders';
+import { canCustomerCancel } from '../../../../../lib/refunds';
 import { getStripe } from '../../../../../lib/stripe';
 
 export const metadata: Metadata = { title: 'Order confirmed | OlaJesu', robots: { index: false, follow: false } };
@@ -115,6 +116,13 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
           <div className={s.callout} style={{ marginTop: 20 }}>
             Keep your Order number for reference. Fresh food can be cancelled for a full refund until the order cut-off; after that, cooking has started. Questions, or a problem with your Order? Email{' '}
             <a href={`mailto:${businessConfig.contact.email}?subject=${encodeURIComponent(`Order ${order.number}`)}`}>{businessConfig.contact.email}</a> with your Order number.
+            {canCustomerCancel(order) && (
+              <div style={{ marginTop: 10 }}>
+                <Link href={`/order/${order.id}/cancel?t=${t}`} className={s.linkBtn}>
+                  Cancel my Order
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>

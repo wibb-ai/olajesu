@@ -175,6 +175,29 @@ export interface Order {
     | number
     | boolean
     | null;
+  refundedTotal?: number | null;
+  cancelledAt?: string | null;
+  cancelledBy?: ('customer' | 'kitchen') | null;
+  refunds?:
+    | {
+        amount?: number | null;
+        at?: string | null;
+        reason?: string | null;
+        details?: string | null;
+        by?: (number | null) | User;
+        stripeRefundId?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  refundedUnits?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   customerName?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -198,6 +221,60 @@ export interface Order {
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name?: string | null;
+  /**
+   * Required for Master admins. Blank means it will be set up at the next sign-in.
+   */
+  twoStepEnabledAt?: string | null;
+  /**
+   * They set it up again with a new code at their next sign-in.
+   */
+  resetTwoStep?: boolean | null;
+  totpSecret?: string | null;
+  totpPendingSecret?: string | null;
+  totpLastStep?: number | null;
+  totpBackupCodes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  totpFailures?: number | null;
+  totpLockedUntil?: string | null;
+  role: 'master-admin' | 'kitchen';
+  /**
+   * Untick when someone leaves. They are signed out at once and kept on past records.
+   */
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -394,60 +471,6 @@ export interface AddOn {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name?: string | null;
-  /**
-   * Required for Master admins. Blank means it will be set up at the next sign-in.
-   */
-  twoStepEnabledAt?: string | null;
-  /**
-   * They set it up again with a new code at their next sign-in.
-   */
-  resetTwoStep?: boolean | null;
-  totpSecret?: string | null;
-  totpPendingSecret?: string | null;
-  totpLastStep?: number | null;
-  totpBackupCodes?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  totpFailures?: number | null;
-  totpLockedUntil?: string | null;
-  role: 'master-admin' | 'kitchen';
-  /**
-   * Untick when someone leaves. They are signed out at once and kept on past records.
-   */
-  active?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "activity-log".
  */
 export interface ActivityLog {
@@ -583,6 +606,21 @@ export interface OrdersSelect<T extends boolean = true> {
   savings?: T;
   total?: T;
   items?: T;
+  refundedTotal?: T;
+  cancelledAt?: T;
+  cancelledBy?: T;
+  refunds?:
+    | T
+    | {
+        amount?: T;
+        at?: T;
+        reason?: T;
+        details?: T;
+        by?: T;
+        stripeRefundId?: T;
+        id?: T;
+      };
+  refundedUnits?: T;
   customerName?: T;
   email?: T;
   phone?: T;

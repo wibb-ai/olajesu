@@ -95,6 +95,49 @@ export const Orders: CollectionConfig = {
       admin: { readOnly: true, description: 'Exactly what was bought, at the prices paid.' },
     },
     {
+      name: 'refundActions',
+      type: 'ui',
+      admin: { components: { Field: '/components/admin/OrderRefundLink' } },
+    },
+    {
+      type: 'collapsible',
+      label: 'Refunds and cancellation',
+      admin: { initCollapsed: false, condition: data => !!data?.refunds?.length || !!data?.cancelledAt },
+      fields: [
+        { name: 'refundedTotal', type: 'number', label: 'Refunded (£)', defaultValue: 0, admin: { readOnly: true } },
+        {
+          type: 'row',
+          fields: [
+            { name: 'cancelledAt', type: 'date', admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+            {
+              name: 'cancelledBy',
+              type: 'select',
+              options: [
+                { label: 'The Customer', value: 'customer' },
+                { label: 'The kitchen', value: 'kitchen' },
+              ],
+              admin: { readOnly: true },
+            },
+          ],
+        },
+        {
+          name: 'refunds',
+          type: 'array',
+          admin: { readOnly: true },
+          labels: { singular: 'Refund', plural: 'Refunds' },
+          fields: [
+            { type: 'row', fields: [{ name: 'amount', type: 'number', label: '£' }, { name: 'at', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' } } }] },
+            { name: 'reason', type: 'text' },
+            { name: 'details', type: 'textarea', label: 'What was refunded' },
+            { name: 'by', type: 'relationship', relationTo: 'users', label: 'Staff member' },
+            { name: 'stripeRefundId', type: 'text', access: { read: masterOnlyRead } },
+          ],
+        },
+        // Which Meals (by position) have been refunded, so none is refunded twice.
+        { name: 'refundedUnits', type: 'json', hidden: true },
+      ],
+    },
+    {
       type: 'collapsible',
       label: 'Customer',
       fields: [

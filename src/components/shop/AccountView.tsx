@@ -17,6 +17,8 @@ export type AccountOrder = {
   status: string;
   summary: string;
   reorder: Basket | null;
+  /** Set while the Order can still be cancelled (before the Cut-off). */
+  cancelUrl: string | null;
 };
 
 type Details = {
@@ -147,11 +149,18 @@ function OrdersCard({ orders }: { orders: AccountOrder[] }) {
           <div className={s.subtle} style={{ whiteSpace: 'pre-line', marginTop: 4 }}>
             {o.summary}
           </div>
-          {o.reorder && (
-            <button className={s.smallPill} style={{ alignSelf: 'flex-start', marginTop: 8 }} onClick={() => shop.addToBasket(o.reorder!)}>
-              Reorder
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginTop: 8 }}>
+            {o.reorder && (
+              <button className={s.smallPill} onClick={() => shop.addToBasket(o.reorder!)}>
+                Reorder
+              </button>
+            )}
+            {o.cancelUrl && (
+              <a href={o.cancelUrl} className={s.linkBtn}>
+                Cancel this Order
+              </a>
+            )}
+          </div>
         </div>
       ))}
       {orders.some(o => o.reorder) && <p className={s.subtle}>Reorder adds the Meals to your basket at today’s prices. Anything no longer on the menu is left out, and we’ll tell you.</p>}

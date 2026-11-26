@@ -12,6 +12,7 @@ import { getMenu } from '../../../lib/menu';
 import { longDate } from '../../../lib/orderEmails';
 import type { OrderItem } from '../../../lib/orders';
 import { basketFromOrder } from '../../../lib/reorder';
+import { canCustomerCancel } from '../../../lib/refunds';
 import { shopEnabled } from '../../../lib/shop';
 
 export const metadata: Metadata = { title: 'Your Account | OlaJesu', robots: { index: false, follow: false } };
@@ -66,6 +67,7 @@ export default async function AccountPage({ searchParams }: Props) {
     status: STATUS[o.status] ?? o.status,
     summary: o.summary ?? '',
     reorder: basketFromOrder((o.items ?? []) as OrderItem[]),
+    cancelUrl: canCustomerCancel(o) && o.accessToken ? `/order/${o.id}/cancel?t=${o.accessToken}` : null,
   }));
 
   return (

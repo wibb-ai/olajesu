@@ -60,6 +60,26 @@ export function deliveryDateClosedToday(now: Date): string | null {
   return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + toDelivery)).toISOString().slice(0, 10);
 }
 
+/** A UK wall-clock time (London, with summer time) as a real instant. */
+export function londonTime(year: number, month: number, day: number, hour: number) {
+  // Start from that time read as UTC, then correct by London's offset at that moment.
+  const guess = new Date(Date.UTC(year, month - 1, day, hour));
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hourCycle: 'h23', hour: '2-digit', day: '2-digit' }).formatToParts(guess).map(p => [p.type, p.value]),
+  );
+  const shown = Date.UTC(year, month - 1, Number(parts.day), Number(parts.hour));
+  return new Date(guess.getTime() - (shown - guess.getTime()));
+}
+
+/** The Cut-off for an Order's delivery date: after it, cooking has started and it can't be cancelled. */
+export function cutoffFor(deliveryDate: string) {
+  const { cutoffDay, cutoffHour, deliveryDay } = DELIVERY_PLACEHOLDER;
+  const [y, m, d] = deliveryDate.slice(0, 10).split('-').map(Number);
+  const daysBefore = (deliveryDay - cutoffDay + 7) % 7 || 7;
+  const day = new Date(Date.UTC(y, m - 1, d - daysBefore));
+  return londonTime(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), cutoffHour);
+}
+
 export function deliveryAfter(cutoff: Date) {
   const { cutoffDay, deliveryDay } = DELIVERY_PLACEHOLDER;
   const d = new Date(cutoff);

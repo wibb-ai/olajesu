@@ -1,4 +1,5 @@
 import { inactivityEmail, linkEmail } from '../../../../lib/accountEmails';
+import { customerCancelledEmail, kitchenCancelledEmail, kitchenNoticeEmail, refundMadeEmail } from '../../../../lib/refundEmails';
 import { confirmationEmail, kitchenOrderEmail, listsEmail, statusEmail } from '../../../../lib/orderEmails';
 import type { OrderItem, OrderMeal } from '../../../../lib/orders';
 import type { Order } from '../../../../payload-types';
@@ -72,6 +73,10 @@ function build() {
     'kitchen-new-order': kitchenOrderEmail(order),
     'kitchen-lists': listsEmail([order, second], '2026-11-28'),
     'kitchen-lists-empty': listsEmail([], '2026-12-05'),
+    'cancelled-by-customer': customerCancelledEmail(order, 97.1),
+    'cancelled-kitchen-notice': kitchenNoticeEmail(order, 97.1),
+    'cancelled-by-kitchen': kitchenCancelledEmail(order, 97.1, 'Our kitchen is closed today because of illness.'),
+    'refund-made': refundMadeEmail(order, 14.7, [{ key: '1.0', label: 'Egusi Soup + Pounded Yam (in the 5-Pack)', amount: 14.7 }], false),
     'account-sign-in': linkEmail('login', 'sample-token'),
     'account-save-details': linkEmail('save-details', 'sample-token'),
     'account-change-email': linkEmail('change-email', 'sample-token'),
