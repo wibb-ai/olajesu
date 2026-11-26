@@ -33,6 +33,12 @@ A Customer withdrawing a paid Order before the Cut-off, for a full refund. Not p
 **Refund**
 Money returned to the Customer's card through Stripe, for a whole Order or only the affected Meals and their Add-ons. Given for a Cancellation, a kitchen cancellation, or a problem the kitchen is responsible for (missing, wrong, damaged, warm or spoiled food, or a missed delivery); a replacement on the next delivery is the alternative.
 
+**Cook list, Packing list, Delivery list**
+The three kitchen lists for a delivery day, produced at the Cut-off: how many of each Meal and Option to cook; what goes in each Order; and where each Order goes, with delivery notes, in route order. Emailed to the kitchen and shown in the Admin Dashboard.
+
+**Kitchen inbox**
+The shared email address where Customer replies land and kitchen notifications go. Set in the Admin Dashboard.
+
 **Catering Enquiry**
 A request for a quote for an event, sent via the catering form. Not paid online; no price is shown up front.
 
