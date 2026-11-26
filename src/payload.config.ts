@@ -3,7 +3,11 @@ import path from 'path';
 import { buildConfig } from 'payload';
 import { fileURLToPath } from 'url';
 
+import { ActivityLog } from './collections/ActivityLog';
+import { AddOns } from './collections/AddOns';
+import { Meals } from './collections/Meals';
 import { Users } from './collections/Users';
+import { PackSettings } from './globals/PackSettings';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -23,7 +27,8 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users],
+  collections: [Meals, AddOns, Users, ActivityLog],
+  globals: [PackSettings],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

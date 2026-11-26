@@ -67,7 +67,10 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    meals: Meal;
+    'add-ons': AddOn;
     users: User;
+    'activity-log': ActivityLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -75,7 +78,10 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    meals: MealsSelect<false> | MealsSelect<true>;
+    'add-ons': AddOnsSelect<false> | AddOnsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'activity-log': ActivityLogSelect<false> | ActivityLogSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -85,8 +91,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'pack-settings': PackSetting;
+  };
+  globalsSelect: {
+    'pack-settings': PackSettingsSelect<false> | PackSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -117,11 +127,167 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals".
+ */
+export interface Meal {
+  id: number;
+  name: string;
+  category: 'rice' | 'soups-stews';
+  description?: string | null;
+  /**
+   * In pounds. Leave blank if the Meal has Options below; each Option has its own price.
+   */
+  price?: number | null;
+  /**
+   * Only for Meals with a protein choice, e.g. Jollof Rice. The Customer must pick one.
+   */
+  options?:
+    | {
+        name: string;
+        price: number;
+        id?: string | null;
+      }[]
+    | null;
+  addOns?: (number | AddOn)[] | null;
+  /**
+   * Every ingredient, checked against the packet labels. Write allergens in CAPITALS, e.g. "palm oil, CRAYFISH, stock cube (CELERY)".
+   */
+  ingredients?: string | null;
+  /**
+   * Tick every one of the 14 allergens this contains.
+   */
+  allergens?:
+    | (
+        | 'celery'
+        | 'gluten'
+        | 'crustaceans'
+        | 'eggs'
+        | 'fish'
+        | 'lupin'
+        | 'milk'
+        | 'molluscs'
+        | 'mustard'
+        | 'tree-nuts'
+        | 'peanuts'
+        | 'sesame'
+        | 'soya'
+        | 'sulphites'
+      )[]
+    | null;
+  /**
+   * Only where there is a real cross-contamination risk. Leave blank otherwise.
+   */
+  mayContain?: string | null;
+  /**
+   * Needed before this can be on the menu. Changing the ingredients, allergens or "may contain" clears it.
+   */
+  allergenCheck?: {
+    confirm?: boolean | null;
+    checkedBy?: (number | null) | User;
+    checkedAt?: string | null;
+  };
+  portionGrams?: number | null;
+  spice?: ('none' | 'mild' | 'medium' | 'hot') | null;
+  /**
+   * Only tick if the meat supplier is halal certified.
+   */
+  halal?: boolean | null;
+  storage?: string | null;
+  reheating?: string | null;
+  /**
+   * Days from the Batch cook date to the use-by date. 2 until the council confirms.
+   */
+  shelfLifeDays: number;
+  /**
+   * Available or Sold out shows it on the site. Needs a current Allergen check.
+   */
+  status: 'hidden' | 'available' | 'sold-out';
+  /**
+   * Most that can be ordered for one delivery day. Blank means no limit.
+   */
+  dailyLimit?: number | null;
+  /**
+   * olajesu.com/meals/… Filled in from the name if left blank.
+   */
+  slug?: string | null;
+  /**
+   * Lower numbers show first.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "add-ons".
+ */
+export interface AddOn {
+  id: number;
+  name: string;
+  /**
+   * In pounds, e.g. 12.50.
+   */
+  price: number;
+  /**
+   * Every ingredient, checked against the packet labels. Write allergens in CAPITALS, e.g. "palm oil, CRAYFISH, stock cube (CELERY)".
+   */
+  ingredients?: string | null;
+  /**
+   * Tick every one of the 14 allergens this contains.
+   */
+  allergens?:
+    | (
+        | 'celery'
+        | 'gluten'
+        | 'crustaceans'
+        | 'eggs'
+        | 'fish'
+        | 'lupin'
+        | 'milk'
+        | 'molluscs'
+        | 'mustard'
+        | 'tree-nuts'
+        | 'peanuts'
+        | 'sesame'
+        | 'soya'
+        | 'sulphites'
+      )[]
+    | null;
+  /**
+   * Only where there is a real cross-contamination risk. Leave blank otherwise.
+   */
+  mayContain?: string | null;
+  /**
+   * Needed before this can be on the menu. Changing the ingredients, allergens or "may contain" clears it.
+   */
+  allergenCheck?: {
+    confirm?: boolean | null;
+    checkedBy?: (number | null) | User;
+    checkedAt?: string | null;
+  };
+  /**
+   * Available or Sold out shows it on the site. Needs a current Allergen check.
+   */
+  status: 'hidden' | 'available' | 'sold-out';
+  /**
+   * Lower numbers show first.
+   */
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
   name?: string | null;
+  role: 'master-admin' | 'kitchen' | 'driver';
+  /**
+   * Untick when someone leaves. They are signed out at once and kept on past records.
+   */
+  active?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -141,6 +307,18 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-log".
+ */
+export interface ActivityLog {
+  id: number;
+  action: string;
+  details?: string | null;
+  staff?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -165,10 +343,23 @@ export interface PayloadKv {
  */
 export interface PayloadLockedDocument {
   id: number;
-  document?: {
-    relationTo: 'users';
-    value: number | User;
-  } | null;
+  document?:
+    | ({
+        relationTo: 'meals';
+        value: number | Meal;
+      } | null)
+    | ({
+        relationTo: 'add-ons';
+        value: number | AddOn;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'activity-log';
+        value: number | ActivityLog;
+      } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
@@ -213,10 +404,74 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "meals_select".
+ */
+export interface MealsSelect<T extends boolean = true> {
+  name?: T;
+  category?: T;
+  description?: T;
+  price?: T;
+  options?:
+    | T
+    | {
+        name?: T;
+        price?: T;
+        id?: T;
+      };
+  addOns?: T;
+  ingredients?: T;
+  allergens?: T;
+  mayContain?: T;
+  allergenCheck?:
+    | T
+    | {
+        confirm?: T;
+        checkedBy?: T;
+        checkedAt?: T;
+      };
+  portionGrams?: T;
+  spice?: T;
+  halal?: T;
+  storage?: T;
+  reheating?: T;
+  shelfLifeDays?: T;
+  status?: T;
+  dailyLimit?: T;
+  slug?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "add-ons_select".
+ */
+export interface AddOnsSelect<T extends boolean = true> {
+  name?: T;
+  price?: T;
+  ingredients?: T;
+  allergens?: T;
+  mayContain?: T;
+  allergenCheck?:
+    | T
+    | {
+        confirm?: T;
+        checkedBy?: T;
+        checkedAt?: T;
+      };
+  status?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  role?: T;
+  active?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -234,6 +489,17 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-log_select".
+ */
+export interface ActivityLogSelect<T extends boolean = true> {
+  action?: T;
+  details?: T;
+  staff?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -274,6 +540,41 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pack-settings".
+ */
+export interface PackSetting {
+  id: number;
+  packs?:
+    | {
+        size: number;
+        /**
+         * Off each Meal in the Pack, including its Option.
+         */
+        discountPercent: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pack-settings_select".
+ */
+export interface PackSettingsSelect<T extends boolean = true> {
+  packs?:
+    | T
+    | {
+        size?: T;
+        discountPercent?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
