@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   description,
   alternates: { canonical: '/catering' },
   openGraph: { title, description, url: '/catering' },
+  twitter: { title, description },
 };
 
 /** Catering's own page (site-restructure ticket), unchanged from today's homepage, enquiry form included. */

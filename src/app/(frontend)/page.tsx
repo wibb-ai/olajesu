@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = 'Nigerian meal prep in Manchester | OlaJesu';
   const description =
     'Jollof, egusi, efo riro and more: 500 g Nigerian home-cooked Meals, cooked fresh in Manchester and delivered chilled. Save with a Pack of 5 or 10.';
-  return { title, description, alternates: { canonical: '/' }, openGraph: { title, description, url: '/' } };
+  return { title, description, alternates: { canonical: '/' }, openGraph: { title, description, url: '/' }, twitter: { title, description } };
 }
 
 export default async function Home() {

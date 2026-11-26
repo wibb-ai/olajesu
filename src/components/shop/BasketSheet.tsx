@@ -139,16 +139,28 @@ export function BasketSheet() {
         </div>
       )}
 
-      <div className={s.sheetBar}>
-        <button className={s.pillDark} style={{ flex: 1 }} disabled title="Checkout is the next part of the build">
-          Checkout opens soon
-        </button>
-      </div>
-      {priced.incompletePacks.length > 0 && !empty && (
-        <p className={s.subtle} style={{ margin: '0 0 16px' }}>
-          Finish or change your part-filled Pack before checkout.
-        </p>
+      {!empty && (
+        <label className={s.subtle} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, cursor: 'pointer' }}>
+          <input type="checkbox" checked={shop.marketingConsent} onChange={e => shop.setMarketingConsent(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>Email me about new Meals and offers. Optional; you can stop any time.</span>
+        </label>
       )}
+
+      {shop.checkoutError && (
+        <div className={s.calloutWarn} role="alert">
+          {shop.checkoutError}
+        </div>
+      )}
+
+      <div className={s.sheetBar} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+        {priced.incompletePacks.length > 0 && !empty && <p className={s.subtle} style={{ margin: 0 }}>Finish or change your part-filled Pack before checkout.</p>}
+        <button className={s.pillDark} disabled={empty || priced.incompletePacks.length > 0 || shop.checkingOut} onClick={shop.checkout}>
+          {shop.checkingOut ? 'Opening secure payment…' : `Checkout · ${gbp(priced.total)}`}
+        </button>
+        <p className={s.subtle} style={{ margin: 0, fontSize: 11, textAlign: 'center' }}>
+          Secure card payment by Stripe. You can cancel for a full refund until the order cut-off.
+        </p>
+      </div>
     </Sheet>
   );
 }

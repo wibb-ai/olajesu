@@ -19,6 +19,7 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 /** The homepage is the shop (site-restructure ticket), in the A4 "Bold landing" design. */
 export function ShopHome() {
   useOldCateringLinks();
+  useCancelledCheckout();
   return (
     <>
       <Hero />
@@ -41,6 +42,20 @@ function useOldCateringLinks() {
   useEffect(() => {
     if (window.location.hash === '#order') window.location.replace('/catering#order');
   }, []);
+}
+
+/** Back from Stripe without paying: reopen the basket, which is still saved. */
+function useCancelledCheckout() {
+  const { setBasketOpen, priced } = useShop();
+  const hasItems = priced.mealCount > 0;
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    // Wait until the saved basket has loaded in the browser.
+    if (url.searchParams.get('checkout') !== 'cancelled' || !hasItems) return;
+    url.searchParams.delete('checkout');
+    window.history.replaceState(null, '', url);
+    queueMicrotask(() => setBasketOpen(true));
+  }, [hasItems, setBasketOpen]);
 }
 
 function Hero() {

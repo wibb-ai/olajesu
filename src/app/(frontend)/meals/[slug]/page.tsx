@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { meal } = found;
   const title = `${meal.name}: Nigerian meal prep in Manchester | OlaJesu`;
   const description = `${meal.description || meal.name} ${meal.portionGrams} g, cooked fresh in Manchester and delivered chilled.`.trim();
-  return { title, description, alternates: { canonical: `/meals/${meal.slug}` }, openGraph: { title, description, url: `/meals/${meal.slug}` } };
+  return { title, description, alternates: { canonical: `/meals/${meal.slug}` }, openGraph: { title, description, url: `/meals/${meal.slug}` }, twitter: { title, description } };
 }
 
 /**

@@ -57,6 +57,9 @@ function setBasket(next: Basket) {
   listeners.forEach(l => l());
 }
 
+/** After a paid Order: start the next visit with an empty basket. */
+export const clearSavedBasket = () => setBasket(emptyBasket);
+
 const subscribe = (l: () => void) => {
   load();
   listeners.add(l);
@@ -77,6 +80,9 @@ function useShopState(menu: Menu) {
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [basketOpen, setBasketOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Write the up-to-date basket back once, and tell the Customer what changed.
   useEffect(() => {
@@ -172,6 +178,38 @@ function useShopState(menu: Menu) {
     removeLine: (key: string) => setBasket({ ...basket, lines: basket.lines.filter(l => l.key !== key) }),
     setLineQty: (key: string, qty: number) =>
       setBasket({ ...basket, lines: qty < 1 ? basket.lines.filter(l => l.key !== key) : basket.lines.map(l => (l.key === key ? { ...l, qty } : l)) }),
+    marketingConsent,
+    setMarketingConsent,
+    checkingOut,
+    checkoutError,
+
+    /** Hands the basket to the server, which re-checks and prices it, then sends the Customer to Stripe. */
+    async checkout() {
+      setCheckingOut(true);
+      setCheckoutError(null);
+      try {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ basket: { ...basket, activePack: null }, marketingConsent }),
+        });
+        const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; changes?: string[]; basket?: Basket };
+        if (res.ok && data.url) {
+          window.location.assign(data.url);
+          return;
+        }
+        if (res.status === 409 && data.basket) {
+          // The menu changed since the page loaded: show the new basket before any payment.
+          setBasket(data.basket);
+          setNotices(n => [...n, ...(data.changes ?? [])]);
+        }
+        setCheckoutError(data.error ?? 'Something went wrong. Please try again.');
+      } catch {
+        setCheckoutError('We couldn’t reach the kitchen. Check your connection and try again.');
+      }
+      setCheckingOut(false);
+    },
+
     merge: mergeSuggestion(menu, basket),
     mergePacks(keys: readonly [string, string], size: number) {
       setBasket(mergePacks(basket, keys, size));

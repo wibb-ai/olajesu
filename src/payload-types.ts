@@ -67,6 +67,7 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    orders: Order;
     meals: Meal;
     'add-ons': AddOn;
     users: User;
@@ -78,6 +79,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     meals: MealsSelect<false> | MealsSelect<true>;
     'add-ons': AddOnsSelect<false> | AddOnsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -124,6 +126,59 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  number: string;
+  status:
+    | 'awaiting-payment'
+    | 'paid'
+    | 'preparing'
+    | 'ready'
+    | 'out-for-delivery'
+    | 'delivered'
+    | 'cancelled'
+    | 'partly-refunded'
+    | 'refunded'
+    | 'expired';
+  deliveryDate: string;
+  summary?: string | null;
+  subtotal: number;
+  savings?: number | null;
+  /**
+   * Delivery fees come with the delivery rules.
+   */
+  total: number;
+  /**
+   * Exactly what was bought, at the prices paid.
+   */
+  items?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  customerName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  deliveryAddress?: string | null;
+  /**
+   * Ticked by the Customer at checkout (CONTEXT.md: Marketing consent).
+   */
+  marketingConsent?: boolean | null;
+  stripeSessionId?: string | null;
+  stripePaymentIntentId?: string | null;
+  paidAt?: string | null;
+  accessToken?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -345,6 +400,10 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
         relationTo: 'meals';
         value: number | Meal;
       } | null)
@@ -401,6 +460,31 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  number?: T;
+  status?: T;
+  deliveryDate?: T;
+  summary?: T;
+  subtotal?: T;
+  savings?: T;
+  total?: T;
+  items?: T;
+  customerName?: T;
+  email?: T;
+  phone?: T;
+  deliveryAddress?: T;
+  marketingConsent?: T;
+  stripeSessionId?: T;
+  stripePaymentIntentId?: T;
+  paidAt?: T;
+  accessToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
