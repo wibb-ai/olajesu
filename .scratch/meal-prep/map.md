@@ -36,6 +36,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [What happens to an unfinished Pack, and is there a Chef's Pack?](issues/07-pack-edge-cases.md): a part-filled Pack is either filled or turned into single Meals, by the Customer's choice; any mix and any number of Packs; the server checks availability and today's prices at checkout and shows any change; no Chef's Pack in phase 1.
 - [What is the refunds and cancellations policy?](issues/08-refunds-cancellations.md): free cancellation up to the Cut-off, none after; no editing paid Orders; refund or replacement for problems the kitchen is responsible for (reports asked for within 24 hours, never as a legal limit); refunds made through Stripe from the dashboard, a role-restricted action the Master admin always has; plain-English terms drafted, solicitor review recommended.
 - [What do the Customer and the kitchen get told, and when?](issues/09-notifications.md): email only, through Resend, from orders@olajesu.com; six Customer emails, starting with the legally required confirmation, and no marketing; the kitchen gets each Order, Cancellation and problem report, plus the Cook, Packing and Delivery lists at the Cut-off; wording fixed, a few settings editable; Kitchen inbox address still to confirm.
+- [How is the site restructured around meal prep?](issues/10-site-restructure.md): the homepage is the A4 shop; catering moves to `/catering` unchanged; one page per Meal; Help, Terms, Privacy, Account and Order pages; per-page search titles, a sitemap and structured data; old `#order` links sent on to catering; the live site switches only when ordering goes live.
 
 ## Not yet specified
 
@@ -45,7 +46,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - **Promo codes and discounts beyond Packs.**
 - **Labels and batches:** how use-by dates and labels are produced per Batch (printing from the dashboard?), pending the council's answers on PPDS versus fully prepacked.
 - **Council confirmation:** the five questions in the food-law research, the 2-day shelf life, plus food business registration before launch.
-- **Launch content:** photos of every Meal (single portion plus a wider shot), written descriptions, reheating and storage wording, the founder story, and real customer reviews (the A4 design depends on strong photos).
+- **Launch content:** photos of every Meal (single portion plus a wider shot), written descriptions, reheating and storage wording, the founder story, real customer reviews (the A4 design depends on strong photos), the Help page wording, and the business details for the footer.
 - **Phase 2, Subscriptions:** frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing. Likely product: a Chef's Pack the kitchen fills each week (ruled out of phase 1 in the Pack edge-cases ticket).
 
 ## Out of scope
