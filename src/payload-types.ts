@@ -95,9 +95,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'pack-settings': PackSetting;
+    'kitchen-settings': KitchenSetting;
   };
   globalsSelect: {
     'pack-settings': PackSettingsSelect<false> | PackSettingsSelect<true>;
+    'kitchen-settings': KitchenSettingsSelect<false> | KitchenSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -176,6 +178,10 @@ export interface Order {
   stripeSessionId?: string | null;
   stripePaymentIntentId?: string | null;
   paidAt?: string | null;
+  /**
+   * Blank means it hasn’t gone yet; it is retried daily.
+   */
+  confirmationSentAt?: string | null;
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -482,6 +488,7 @@ export interface OrdersSelect<T extends boolean = true> {
   stripeSessionId?: T;
   stripePaymentIntentId?: T;
   paidAt?: T;
+  confirmationSentAt?: T;
   accessToken?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -646,6 +653,27 @@ export interface PackSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kitchen-settings".
+ */
+export interface KitchenSetting {
+  id: number;
+  /**
+   * Where Customer replies land and where kitchen emails go. Until set, the catering enquiry address is used.
+   */
+  kitchenInbox?: string | null;
+  /**
+   * Untick once Orders get busy; the lists at the Cut-off still arrive.
+   */
+  emailEachOrder?: boolean | null;
+  /**
+   * A short line shown in every Order confirmation, e.g. a holiday notice. Leave blank for none.
+   */
+  kitchenNote?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pack-settings_select".
  */
 export interface PackSettingsSelect<T extends boolean = true> {
@@ -656,6 +684,18 @@ export interface PackSettingsSelect<T extends boolean = true> {
         discountPercent?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kitchen-settings_select".
+ */
+export interface KitchenSettingsSelect<T extends boolean = true> {
+  kitchenInbox?: T;
+  emailEachOrder?: T;
+  kitchenNote?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

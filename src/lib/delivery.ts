@@ -43,6 +43,23 @@ export function deliveryDateFor(now: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * If a Cut-off has passed today (London time), the delivery date it closed, so the kitchen
+ * lists can go out. Null on any other day or before the Cut-off hour.
+ */
+export function deliveryDateClosedToday(now: Date): string | null {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', weekday: 'short', hourCycle: 'h23' })
+      .formatToParts(now)
+      .map(p => [p.type, p.value]),
+  );
+  const { cutoffDay, cutoffHour, deliveryDay } = DELIVERY_PLACEHOLDER;
+  const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(parts.weekday);
+  if (dow !== cutoffDay || Number(parts.hour) < cutoffHour) return null;
+  const toDelivery = (deliveryDay - cutoffDay + 7) % 7 || 7;
+  return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + toDelivery)).toISOString().slice(0, 10);
+}
+
 export function deliveryAfter(cutoff: Date) {
   const { cutoffDay, deliveryDay } = DELIVERY_PLACEHOLDER;
   const d = new Date(cutoff);

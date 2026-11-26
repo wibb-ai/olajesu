@@ -11,6 +11,7 @@ import { ShopShell } from '../../../../../components/shop/ShopShell';
 import s from '../../../../../components/shop/shop.module.css';
 import { businessConfig } from '../../../../../config/businessConfig';
 import { getMenu } from '../../../../../lib/menu';
+import { notifyPaid } from '../../../../../lib/orderEmails';
 import { markPaidFromSession, type OrderItem } from '../../../../../lib/orders';
 import { getStripe } from '../../../../../lib/stripe';
 
@@ -37,7 +38,10 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
     if (stripe) {
       const session = await stripe.checkout.sessions.retrieve(session_id);
       const result = await markPaidFromSession(payload, session);
-      if (result.changed) order = await payload.findByID({ collection: 'orders', id: order.id, depth: 0, overrideAccess: true });
+      if (result.changed) {
+        await notifyPaid(payload, result.id);
+        order = await payload.findByID({ collection: 'orders', id: order.id, depth: 0, overrideAccess: true });
+      }
     }
   }
 

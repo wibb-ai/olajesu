@@ -2,7 +2,8 @@ import { randomBytes } from 'crypto';
 import type { Payload } from 'payload';
 import type Stripe from 'stripe';
 
-import { describeChoice, priceBasket, type Basket, type Menu, mealPence, addOnsPence, packDiscountPence } from './basket';
+import { allergenLabel } from './allergens';
+import { addOnById, addOnsPence, describeChoice, mealById, mealPence, packDiscountPence, priceBasket, type Basket, type Choice, type Menu } from './basket';
 
 const pounds = (pence: number) => Math.round(pence) / 100;
 
@@ -15,13 +16,25 @@ export function newOrderNumber() {
 
 export const newAccessToken = () => randomBytes(24).toString('hex');
 
+/** One Meal as sold, with its allergens as they were at the time of sale. */
+export type OrderMeal = {
+  name: string;
+  addOns: string;
+  addOnNames: string[];
+  mealPrice: number;
+  paidForMeal: number;
+  addOnsPrice: number;
+  allergens: string[];
+  mayContain: string;
+};
+
 export type OrderItem = {
   kind: 'single' | 'pack';
   label: string;
   /** Pack size, or the quantity of a single Meal. */
   qty: number;
   discountPercent: number;
-  meals: { name: string; addOns: string; mealPrice: number; paidForMeal: number; addOnsPrice: number }[];
+  meals: OrderMeal[];
   total: number;
 };
 
@@ -43,18 +56,14 @@ export function snapshotBasket(menu: Menu, basket: Basket) {
       label,
       qty: line.qty,
       discountPercent: 0,
-      meals: [{ name: d.name, addOns: d.addOns, mealPrice: pounds(mealPence(menu, line.choice) ?? 0), paidForMeal: pounds(mealPence(menu, line.choice) ?? 0), addOnsPrice: pounds(addOnsPence(menu, line.choice)) }],
+      meals: [orderMeal(menu, line.choice, 0)],
       total: pounds(unit * line.qty),
     });
     stripeLines.push({ quantity: line.qty, price_data: { currency: 'gbp', unit_amount: unit, product_data: { name: label } } });
   }
 
   for (const p of priced.packs) {
-    const meals = p.pack.items.map(it => {
-      const d = describeChoice(menu, it);
-      const full = mealPence(menu, it) ?? 0;
-      return { name: d.name, addOns: d.addOns, mealPrice: pounds(full), paidForMeal: pounds(full - packDiscountPence(full, p.discountPercent)), addOnsPrice: pounds(addOnsPence(menu, it)) };
-    });
+    const meals = p.pack.items.map(it => orderMeal(menu, it, p.discountPercent));
     const label = `${p.pack.size}-Pack, ${p.discountPercent}% off each Meal`;
     items.push({ kind: 'pack', label, qty: p.pack.size, discountPercent: p.discountPercent, meals, total: pounds(p.total) });
     const contents = meals.map(m => (m.addOns ? `${m.name} + ${m.addOns}` : m.name));
@@ -71,8 +80,27 @@ export function snapshotBasket(menu: Menu, basket: Basket) {
   return { priced, items, stripeLines, summary, subtotal: pounds(priced.total), savings: pounds(priced.saved) };
 }
 
+function orderMeal(menu: Menu, choice: Choice, discountPercent: number): OrderMeal {
+  const d = describeChoice(menu, choice);
+  const meal = mealById(menu, choice.mealId);
+  const addOns = choice.addOnIds.map(id => addOnById(menu, id)).filter(a => !!a);
+  const full = mealPence(menu, choice) ?? 0;
+  const allergens = [...new Set([...(meal?.allergens ?? []), ...addOns.flatMap(a => a.allergens)])].map(allergenLabel);
+  const mayContain = [meal?.mayContain, ...addOns.map(a => a.mayContain)].filter(Boolean).join('; ');
+  return {
+    name: d.name,
+    addOns: d.addOns,
+    addOnNames: addOns.map(a => a.name),
+    mealPrice: pounds(full),
+    paidForMeal: pounds(full - packDiscountPence(full, discountPercent)),
+    addOnsPrice: pounds(addOnsPence(menu, choice)),
+    allergens,
+    mayContain,
+  };
+}
+
 /** "Egusi Soup × 3, Jollof Rice, chicken" from a list with repeats. */
-function tally(names: string[]) {
+export function tally(names: string[]) {
   const counts = new Map<string, number>();
   for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
   return [...counts].map(([n, c]) => (c > 1 ? `${n} × ${c}` : n)).join(', ');
@@ -119,7 +147,7 @@ export async function markPaidFromSession(payload: Payload, session: Stripe.Chec
       stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent?.id ?? null),
     },
   });
-  return { changed: true, number: order.number } as const;
+  return { changed: true, number: order.number, id: order.id } as const;
 }
 
 /** A Checkout Session that expired unpaid: the Order is kept as abandoned, never charged. */

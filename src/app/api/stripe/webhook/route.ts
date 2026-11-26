@@ -2,6 +2,7 @@ import config from '@payload-config';
 import { getPayload } from 'payload';
 import type Stripe from 'stripe';
 
+import { notifyPaid } from '../../../../lib/orderEmails';
 import { markExpiredFromSession, markPaidFromSession } from '../../../../lib/orders';
 import { getStripe } from '../../../../lib/stripe';
 
@@ -30,7 +31,10 @@ export async function POST(request: Request) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded': {
       const result = await markPaidFromSession(payload, event.data.object);
-      if (result.changed) payload.logger.info(`Order ${result.number} paid`);
+      if (result.changed) {
+        payload.logger.info(`Order ${result.number} paid`);
+        await notifyPaid(payload, result.id);
+      }
       break;
     }
     case 'checkout.session.expired':

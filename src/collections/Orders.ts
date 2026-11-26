@@ -1,6 +1,7 @@
 import type { CollectionConfig, FieldAccess } from 'payload';
 
 import { hasRole, isKitchenOrAbove, isMasterAdmin } from '../access/roles';
+import { sendStatusEmail } from '../lib/orderEmails';
 
 /** Customers' contact details are for the Master admin only (staff-roles ticket). */
 const masterOnlyRead: FieldAccess = ({ req }) => hasRole(req, 'master-admin');
@@ -40,6 +41,14 @@ export const Orders: CollectionConfig = {
     create: () => false,
     update: isMasterAdmin,
     delete: () => false,
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        // "Out for delivery" and "Ready to collect" tell the Customer by email.
+        if (operation === 'update' && previousDoc?.status !== doc.status) await sendStatusEmail(req.payload, doc, req);
+      },
+    ],
   },
   fields: [
     { name: 'number', type: 'text', required: true, unique: true, index: true, admin: { readOnly: true } },
@@ -104,6 +113,12 @@ export const Orders: CollectionConfig = {
         { name: 'stripeSessionId', type: 'text', index: true, admin: { readOnly: true }, access: { read: masterOnlyRead } },
         { name: 'stripePaymentIntentId', type: 'text', admin: { readOnly: true }, access: { read: masterOnlyRead } },
         { name: 'paidAt', type: 'date', admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+        {
+          name: 'confirmationSentAt',
+          type: 'date',
+          label: 'Confirmation emailed',
+          admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' }, description: 'Blank means it hasn’t gone yet; it is retried daily.' },
+        },
         // Lets the Customer open their own confirmation page; never shown to staff.
         { name: 'accessToken', type: 'text', hidden: true },
       ],

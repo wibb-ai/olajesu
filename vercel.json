@@ -4,5 +4,11 @@
   "buildCommand": "npm run ci",
   "regions": [
     "lhr1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "15 20 * * *"
+    }
   ]
 }

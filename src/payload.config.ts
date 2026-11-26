@@ -8,6 +8,7 @@ import { AddOns } from './collections/AddOns';
 import { Meals } from './collections/Meals';
 import { Orders } from './collections/Orders';
 import { Users } from './collections/Users';
+import { KitchenSettings } from './globals/KitchenSettings';
 import { PackSettings } from './globals/PackSettings';
 
 const filename = fileURLToPath(import.meta.url);
@@ -29,7 +30,7 @@ export default buildConfig({
     },
   },
   collections: [Orders, Meals, AddOns, Users, ActivityLog],
-  globals: [PackSettings],
+  globals: [PackSettings, KitchenSettings],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
