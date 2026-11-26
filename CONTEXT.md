@@ -34,7 +34,13 @@ A recurring Order placed automatically on a schedule. Not part of the one-time o
 A person who places an Order. A Customer may order as a guest or with an Account.
 
 **Account**
-An optional login a Customer is encouraged (never required) to create, to make repeat ordering smoother. Required only for Subscriptions.
+An optional login a Customer is encouraged (never required) to create, to make repeat ordering smoother. Required only for Subscriptions. Holds the Customer's saved details (name, phone, one delivery address, delivery notes), their Order history and reorder. Signed into only by Login link; no password. Exists only once its email is proven by clicking a Login link, and every Order placed with that email (as a guest or not, before or after) appears in it. Kept until deleted or 3 years unused; deleting it keeps the Orders as anonymised sales records.
+
+**Login link**
+A single-use link emailed to a Customer that signs them in to their Account. Expires after 15 minutes; the sign-in then lasts 30 days on that device.
+
+**Marketing consent**
+A Customer's recorded, opt-in agreement (separate, unticked by default) to receive marketing emails. Order emails never need it.
 
 **Admin Dashboard**
 Where OlaJesu staff manage Orders, Meals, Packs and prices. Prices and the menu are changed here, not in code.

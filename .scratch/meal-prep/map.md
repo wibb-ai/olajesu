@@ -32,12 +32,14 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [What does UK food law require for selling fresh meals online?](issues/02-food-law.md): allergen info for the 14 allergens in writing before purchase and at delivery; full label on every pack recommended; register with the council, show the hygiene rating, state that perishables can't be cancelled, keep deliveries at 8°C or below.
 - [What is on the launch meal-prep menu?](issues/04-meal-prep-menu.md): 8 Meals of one 500 g Portion; protein Options on Jollof and Fried Rice (£6–£15); soups and stews £12–£15; swallows and sides as Add-ons; Packs of 5 (10% off) and 10 (15% off); a Meal can't go on sale without an Allergen check; 2-day shelf life to confirm with the council.
 - [How should ordering look and feel?](issues/05-ordering-flow-prototype.md): one menu page with a sheet for each Meal; Packs as an opt-in mode whose slots fill as Meals are added; a basket mixing Packs and singles; Stripe hosted checkout; one-tap Account on the confirmation page. The look is A4 "Bold landing", a bold landing page and shop in one, phone first (prototype on `prototype/ordering-flow`).
+- [What does a Customer Account do in phase 1?](issues/06-accounts.md): saved details, Order history and reorder; sign-in only by emailed Login link; an Account exists once its email is proven and shows every Order with that email; Orders kept 6 years, profiles until deleted or 3 years unused; Marketing consent is opt-in, and no marketing is sent in phase 1.
 
 ## Not yet specified
 
 - **Delivery rules:** which days, which postcodes, fees or free-delivery threshold, order cut-off, delivery slots, whether collection from Mary Street is offered. Must be editable, not hard-coded. User wants to settle this once the system is built.
 - **Kitchen capacity:** whether to cap Orders per delivery day, or mark Meals as sold out.
-- **Notifications:** what the Customer and the kitchen receive, and when (confirmation, out for delivery, ...).
+- **Notifications:** what the Customer and the kitchen receive, and when (confirmation, out for delivery, ...). Login link and Account emails are settled in the Accounts ticket.
+- **Privacy page wording:** set out the data rules from the Accounts ticket, plus cookies and analytics.
 - **Refunds and cancellations policy:** likely similar to 1207 Kitchen (perishables exempt, report problems within 24 hours). Needs wording and a process.
 - **Site restructure:** new homepage and navigation, where catering moves, SEO and redirects. The A4 prototype suggests the homepage *is* the shop (hero, Pack offer and menu on one page, with catering linked from the hero).
 - **Unfinished Packs and a Chef's Pack:** what happens to a part-filled Pack at checkout, and whether to offer a kitchen-chosen Pack as a third way to order.
