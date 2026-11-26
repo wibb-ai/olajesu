@@ -75,6 +75,7 @@ export async function POST(request: Request) {
       marketingConsent: body.marketingConsent === true,
       // Signed in: the Order's email is the Account's (Accounts ticket).
       email: customer?.email ?? null,
+      deliveryNotes: customer?.deliveryNotes ?? null,
       updateSavedDetails: !!customer && body.updateSavedDetails === true,
       accessToken,
     },

@@ -27,6 +27,7 @@ export default buildConfig({
     // Built-in avatar: Gravatar would send a hash of each staff email to a third party.
     avatar: 'default',
     meta: { titleSuffix: ' · OlaJesu Admin' },
+    components: { beforeDashboard: ['/components/admin/KitchenLink'] },
     importMap: {
       baseDir: path.resolve(dirname),
     },

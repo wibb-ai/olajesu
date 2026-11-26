@@ -153,6 +153,10 @@ export interface Order {
     | 'expired';
   deliveryDate: string;
   summary?: string | null;
+  /**
+   * Ticked off on the kitchen’s packing list.
+   */
+  packedAt?: string | null;
   subtotal: number;
   savings?: number | null;
   /**
@@ -175,6 +179,10 @@ export interface Order {
   email?: string | null;
   phone?: string | null;
   deliveryAddress?: string | null;
+  /**
+   * From the Customer’s Account.
+   */
+  deliveryNotes?: string | null;
   /**
    * Ticked by the Customer at checkout (CONTEXT.md: Marketing consent).
    */
@@ -548,6 +556,7 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   deliveryDate?: T;
   summary?: T;
+  packedAt?: T;
   subtotal?: T;
   savings?: T;
   total?: T;
@@ -556,6 +565,7 @@ export interface OrdersSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   deliveryAddress?: T;
+  deliveryNotes?: T;
   marketingConsent?: T;
   stripeSessionId?: T;
   stripePaymentIntentId?: T;

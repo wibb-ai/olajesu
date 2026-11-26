@@ -224,7 +224,7 @@ export function kitchenLists(orders: Order[]) {
         for (const a of m.addOnNames ?? []) addOns.set(a, (addOns.get(a) ?? 0) + n);
       }
   const sorted = (m: Map<string, number>) => [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const byPostcode = [...orders].sort((a, b) => postcode(a).localeCompare(postcode(b)));
+  const byPostcode = [...orders].sort((a, b) => postcode(a).localeCompare(postcode(b), 'en', { numeric: true }));
   return { cook: sorted(cook), addOns: sorted(addOns), packing: orders, delivery: byPostcode };
 }
 const postcode = (o: Order) => (o.deliveryAddress ?? '').trim().split('\n').pop() ?? '';

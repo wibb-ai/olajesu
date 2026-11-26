@@ -70,6 +70,12 @@ export const Orders: CollectionConfig = {
     },
     { name: 'summary', type: 'textarea', label: 'What was ordered', admin: { readOnly: true } },
     {
+      name: 'packedAt',
+      type: 'date',
+      label: 'Packed',
+      admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' }, description: 'Ticked off on the kitchen’s packing list.' },
+    },
+    {
       type: 'row',
       fields: [
         { name: 'subtotal', type: 'number', label: 'Total (£)', admin: { readOnly: true }, required: true },
@@ -96,6 +102,7 @@ export const Orders: CollectionConfig = {
         { name: 'email', type: 'email', index: true, admin: { readOnly: true }, ...contact },
         { name: 'phone', type: 'text', admin: { readOnly: true }, ...contact },
         { name: 'deliveryAddress', type: 'textarea', admin: { readOnly: true }, ...contact },
+        { name: 'deliveryNotes', type: 'textarea', admin: { readOnly: true, description: 'From the Customer’s Account.' }, ...contact },
         {
           name: 'marketingConsent',
           type: 'checkbox',

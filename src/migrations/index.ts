@@ -3,6 +3,7 @@ import * as migration_20261126_182438_menu_and_roles from './20261126_182438_men
 import * as migration_20261126_190032_orders from './20261126_190032_orders';
 import * as migration_20261126_192934_kitchen_emails from './20261126_192934_kitchen_emails';
 import * as migration_20261126_200802_accounts from './20261126_200802_accounts';
+import * as migration_20261126_203700_kitchen_screens from './20261126_203700_kitchen_screens';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261126_200802_accounts.up,
     down: migration_20261126_200802_accounts.down,
-    name: '20261126_200802_accounts'
+    name: '20261126_200802_accounts',
+  },
+  {
+    up: migration_20261126_203700_kitchen_screens.up,
+    down: migration_20261126_203700_kitchen_screens.down,
+    name: '20261126_203700_kitchen_screens'
   },
 ];
