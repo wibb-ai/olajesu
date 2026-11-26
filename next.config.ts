@@ -25,10 +25,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },
-  async redirects() {
-    // The site is a single page; old /catering links go to the home page.
-    return [{ source: '/catering', destination: '/', permanent: true }];
-  },
+  // /catering is catering's own page once the shop is live; before that the page itself
+  // sends visitors to the homepage (src/app/(frontend)/catering/page.tsx).
 };
 
 export default withPayload(nextConfig, { devBundleServerPackages: false });

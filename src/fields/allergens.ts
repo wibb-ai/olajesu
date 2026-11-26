@@ -1,24 +1,9 @@
 import { APIError, type CollectionBeforeChangeHook, type Field } from 'payload';
 
 import { staff } from '../access/roles';
+import { ALLERGENS } from '../lib/allergens';
 
-/** The 14 allergens UK law requires us to declare. */
-export const ALLERGENS = [
-  { label: 'Celery', value: 'celery' },
-  { label: 'Cereals containing gluten', value: 'gluten' },
-  { label: 'Crustaceans', value: 'crustaceans' },
-  { label: 'Eggs', value: 'eggs' },
-  { label: 'Fish', value: 'fish' },
-  { label: 'Lupin', value: 'lupin' },
-  { label: 'Milk', value: 'milk' },
-  { label: 'Molluscs', value: 'molluscs' },
-  { label: 'Mustard', value: 'mustard' },
-  { label: 'Tree nuts', value: 'tree-nuts' },
-  { label: 'Peanuts', value: 'peanuts' },
-  { label: 'Sesame', value: 'sesame' },
-  { label: 'Soya', value: 'soya' },
-  { label: 'Sulphur dioxide and sulphites', value: 'sulphites' },
-] as const;
+export { ALLERGENS };
 
 /** Statuses that put an item in front of Customers, so they need a current Allergen check. */
 export const ON_MENU = ['available', 'sold-out'];
