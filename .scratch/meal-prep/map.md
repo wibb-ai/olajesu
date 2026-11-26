@@ -34,10 +34,11 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [How should ordering look and feel?](issues/05-ordering-flow-prototype.md): one menu page with a sheet for each Meal; Packs as an opt-in mode whose slots fill as Meals are added; a basket mixing Packs and singles; Stripe hosted checkout; one-tap Account on the confirmation page. The look is A4 "Bold landing", a bold landing page and shop in one, phone first (prototype on `prototype/ordering-flow`).
 - [What does a Customer Account do in phase 1?](issues/06-accounts.md): saved details, Order history and reorder; sign-in only by emailed Login link; an Account exists once its email is proven and shows every Order with that email; Orders kept 6 years, profiles until deleted or 3 years unused; Marketing consent is opt-in, and no marketing is sent in phase 1.
 - [What happens to an unfinished Pack, and is there a Chef's Pack?](issues/07-pack-edge-cases.md): a part-filled Pack is either filled or turned into single Meals, by the Customer's choice; any mix and any number of Packs; the server checks availability and today's prices at checkout and shows any change; no Chef's Pack in phase 1.
+- [What is the refunds and cancellations policy?](issues/08-refunds-cancellations.md): free cancellation up to the Cut-off, none after; no editing paid Orders; refund or replacement for problems the kitchen is responsible for (reports asked for within 24 hours, never as a legal limit); refunds made through Stripe from the dashboard, a role-restricted action the Master admin always has; plain-English terms drafted, solicitor review recommended.
 
 ## Not yet specified
 
-- **Delivery rules:** which days, which postcodes, fees or free-delivery threshold, order cut-off, delivery slots, whether collection from Mary Street is offered. Must be editable, not hard-coded. User wants to settle this once the system is built.
+- **Delivery rules:** which days, which postcodes, fees or free-delivery threshold, order cut-off, delivery slots, whether collection from Mary Street is offered. Must be editable, not hard-coded. User wants to settle this once the system is built. Also: what happens when a delivery fails through the Customer's fault (nobody home, wrong address).
 - **Kitchen capacity:** whether to cap Orders per delivery day, or mark Meals as sold out.
 - **Privacy page wording:** set out the data rules from the Accounts ticket, plus cookies and analytics.
 - **Promo codes and discounts beyond Packs.**

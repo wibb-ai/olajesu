@@ -24,6 +24,15 @@ A named person's dated confirmation that a Meal's ingredients and allergens were
 **Order**
 A one-time purchase of Meals and/or Packs, paid by card at checkout. Distinct from a Catering Enquiry.
 
+**Cut-off**
+The latest time an Order can be placed, or cancelled, for a given delivery day. After it, cooking starts. Its day and time are set by the delivery rules.
+
+**Cancellation**
+A Customer withdrawing a paid Order before the Cut-off, for a full refund. Not possible after the Cut-off; the legal 14-day right doesn't apply to fresh food. A paid Order can't be edited, only cancelled and placed again.
+
+**Refund**
+Money returned to the Customer's card through Stripe, for a whole Order or only the affected Meals and their Add-ons. Given for a Cancellation, a kitchen cancellation, or a problem the kitchen is responsible for (missing, wrong, damaged, warm or spoiled food, or a missed delivery); a replacement on the next delivery is the alternative.
+
 **Catering Enquiry**
 A request for a quote for an event, sent via the catering form. Not paid online; no price is shown up front.
 
@@ -44,3 +53,6 @@ A Customer's recorded, opt-in agreement (separate, unticked by default) to recei
 
 **Admin Dashboard**
 Where OlaJesu staff manage Orders, Meals, Packs and prices. Prices and the menu are changed here, not in code.
+
+**Master admin**
+The top staff role in the Admin Dashboard, with every right, including Refunds and kitchen cancellations. Other staff roles get only the rights given to them.
