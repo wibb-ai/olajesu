@@ -3,20 +3,24 @@ import type { Payload, PayloadRequest } from 'payload';
 import { businessConfig } from '../config/businessConfig';
 import type { Order } from '../payload-types';
 import { DELIVERY_PLACEHOLDER } from './delivery';
-import { emailLayout, escapeHtml as e, h1, muted, p, sendEmail } from './email';
-import { tally, type OrderItem, type OrderMeal } from './orders';
+import { C, card, darkPanel, emailLayout, escapeHtml as e, moneyRow, muted, para, sendEmail, site, table } from './email';
+import type { OrderItem, OrderMeal } from './orders';
+import { tally } from './text';
 
 /*
- * The emails that go with an Order (notifications ticket). Wording is fixed here, not in the
- * dashboard, so the legally required parts (allergens, the cancellation notice, business
- * details) can't be dropped by accident.
+ * The emails that go with an Order (notifications ticket), in the shop's A4 style and voice.
+ * Wording lives here, not in the dashboard, so the legally required parts (allergens, the
+ * cancellation notice, business details) can't be dropped by accident. Each builder is a pure
+ * function of the Order, so /api/dev/emails can preview them with sample data.
  */
 
 const gbp = (n: number) => `£${n.toFixed(2).replace(/\.00$/, '')}`;
 export const longDate = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London' });
+const weekday = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' });
+const firstName = (o: Order) => (o.customerName ?? '').trim().split(/\s+/)[0] || '';
 
-type Settings = { kitchenInbox?: string | null; emailEachOrder?: boolean | null; kitchenNote?: string | null };
+export type Settings = { kitchenInbox?: string | null; emailEachOrder?: boolean | null; kitchenNote?: string | null };
 
 /** Pass `req` from inside a hook, so the read joins that change's database transaction. */
 async function settings(payload: Payload, req?: PayloadRequest): Promise<Settings> {
@@ -24,20 +28,39 @@ async function settings(payload: Payload, req?: PayloadRequest): Promise<Setting
 }
 const kitchenInbox = (s: Settings) => s.kitchenInbox || process.env.ENQUIRY_TO_EMAIL || businessConfig.contact.email;
 
-const businessFooter = () => {
-  const { contact, business } = businessConfig;
-  return `${e(business.name)} · ${e(contact.address.full)} · <a href="mailto:${e(contact.email)}" style="color:#6B6355;">${e(contact.email)}</a>`;
-};
+const { business, contact } = businessConfig;
+const businessFooter = () =>
+  `<b style="color:${C.ink};">${e(business.name)}</b> · ${e(contact.address.full)}<br><a href="mailto:${e(contact.email)}" style="color:${C.muted};">${e(contact.email)}</a> · <a href="${site()}" style="color:${C.muted};">olajesu.com</a>`;
+const businessFooterText = () => `${business.name} · ${contact.address.full} · ${contact.email} · olajesu.com`;
 
 const mealLine = (m: OrderMeal) => (m.addOns ? `${m.name} + ${m.addOns}` : m.name);
 const allergenText = (m: OrderMeal) =>
-  `${m.allergens.length ? `Contains: ${m.allergens.join(', ')}` : 'Contains none of the 14 allergens'}${m.mayContain ? `. May contain: ${m.mayContain}` : ''}`;
+  `${m.allergens.length ? `Contains ${m.allergens.join(', ')}` : 'Contains none of the 14 allergens'}${m.mayContain ? `. May contain ${m.mayContain}` : ''}`;
 
 /** Each distinct Meal in the Order once, with its allergens. */
-function allergenList(items: OrderItem[]) {
+function distinctMeals(items: OrderItem[]) {
   const seen = new Map<string, OrderMeal>();
   for (const it of items) for (const m of it.meals) seen.set(mealLine(m), m);
   return [...seen.values()];
+}
+
+const orderLink = (o: Order) => (o.accessToken ? `${site()}/order/${o.id}/confirmed?t=${o.accessToken}` : site());
+const short = (day: string) => day.slice(0, 3);
+
+const cancelNotice = () =>
+  `Changed your plans? You can cancel for a full refund until the order cut-off (${DELIVERY_PLACEHOLDER.cutoffLabel} before delivery). Just reply to this email with your Order number. After the cut-off we've started cooking, so we can't cancel: fresh food isn't covered by the legal 14-day right to cancel.`;
+const problemNotice = `Something not right? Reply within 24 hours of delivery, with a photo if you can, and we'll put it right with a refund or a replacement.`;
+
+/** The Order table: each single Meal or Pack, Pack savings and the total paid. */
+function orderTable(order: Order, items: OrderItem[]) {
+  const rows = items.map(it =>
+    it.kind === 'single'
+      ? moneyRow(`${it.qty} × ${e(it.label)}`, gbp(it.total))
+      : moneyRow(e(it.label), gbp(it.total), { sub: e(tally(it.meals.map(mealLine))) }),
+  );
+  if (order.savings) rows.push(moneyRow('Pack savings', `−${gbp(order.savings)}`, { color: C.green }));
+  rows.push(moneyRow('Paid', gbp(order.total), { bold: true, last: true }));
+  return table(rows.join(''));
 }
 
 // ---------------------------------------------------------------------------
@@ -45,63 +68,70 @@ function allergenList(items: OrderItem[]) {
 
 export function confirmationEmail(order: Order, s: Settings) {
   const items = (order.items ?? []) as OrderItem[];
-  const delivery = longDate(order.deliveryDate);
-  const cancelNotice = `You can cancel for a full refund until the order cut-off (${DELIVERY_PLACEHOLDER.cutoffLabel} before delivery): reply to this email with your Order number. After the cut-off we can't cancel, because fresh food is cooked to order and the legal 14-day right to cancel doesn't apply to it.`;
-
-  const rows = items
-    .map(it => {
-      const head = it.kind === 'single' ? `${it.qty} × ${e(it.label)}` : e(it.label);
-      const contents = it.kind === 'pack' ? `<br>${muted(e(tally(it.meals.map(mealLine))))}` : '';
-      return `<tr><td style="padding:8px 0;border-bottom:1px solid #EDE6D3;">${head}${contents}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #EDE6D3;white-space:nowrap;">${gbp(it.total)}</td></tr>`;
-    })
-    .join('');
-  const savings = order.savings ? `<tr><td style="padding:8px 0;color:#1B4332;">Pack savings</td><td align="right" style="color:#1B4332;">−${gbp(order.savings)}</td></tr>` : '';
-  const allergens = allergenList(items)
-    .map(m => `<li style="margin:0 0 6px;"><b>${e(mealLine(m))}</b>: ${e(allergenText(m))}</li>`)
-    .join('');
+  const day = longDate(order.deliveryDate);
+  const name = firstName(order);
+  const meals = distinctMeals(items);
 
   const html = emailLayout({
-    preheader: `Order ${order.number} for ${delivery}`,
-    body: [
-      h1('Thank you, your Order is confirmed'),
-      p(`Order <b>${e(order.number)}</b> · delivery on <b>${e(delivery)}</b>`),
-      s.kitchenNote ? p(`<i>${e(s.kitchenNote)}</i>`) : '',
-      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:8px 0 16px;">${rows}${savings}<tr><td style="padding:10px 0;font-weight:bold;">Paid</td><td align="right" style="font-weight:bold;">${gbp(order.total)}</td></tr></table>`,
-      order.deliveryAddress ? p(`<b>Delivering to</b><br>${e(order.deliveryAddress).replace(/\n/g, '<br>')}`) : '',
-      `<h2 style="font-size:16px;margin:18px 0 8px;">Allergens</h2><ul style="padding-left:18px;margin:0 0 14px;font-size:14px;">${allergens}</ul>`,
-      p(muted('Full ingredients, storage and reheating are on each Meal’s page and on the label. Keep chilled and eat by the use-by date.')),
-      `<h2 style="font-size:16px;margin:18px 0 8px;">Cancelling</h2>`,
-      p(e(cancelNotice)),
-      p(`A problem with your Order? Reply to this email within 24 hours of delivery, with a photo if you can, and we'll put it right.`),
+    preheader: `Order ${order.number} is booked in for ${day}. Here's everything you need.`,
+    strip: { title: 'Order confirmed', sub: `Delivery ${day}` },
+    hero: {
+      label: `Order ${order.number}`,
+      line1: name ? `Thank you, ${name}.` : 'Thank you.',
+      line2: "We're cooking for you.",
+      text: `We'll cook your Order fresh in our Manchester kitchen and bring it to you chilled on <b style="color:${C.ink};">${e(day)}</b>.`,
+      button: { label: 'View your Order', href: orderLink(order) },
+    },
+    sections: [
+      s.kitchenNote ? card(para(e(s.kitchenNote), { margin: '0 0 12px' }), { eyebrow: 'A note from the kitchen', background: C.blush }) : '',
+      card(orderTable(order, items), { eyebrow: 'Your Order', heading: "What's coming" }),
+      order.deliveryAddress
+        ? card(para(`<b>${e(day)}</b><br>${e(order.deliveryAddress).replace(/\n/g, '<br>')}`, { margin: '0 0 12px' }), { eyebrow: 'Delivery', heading: "Where it's going" })
+        : '',
+      darkPanel('What happens next', 'From our kitchen to your fridge', [
+        [short(DELIVERY_PLACEHOLDER.cutoffLabel), 'Change of plan?', `Cancel for a full refund until ${e(DELIVERY_PLACEHOLDER.cutoffLabel)}. Just reply to this email.`],
+        [short(weekday(order.deliveryDate)), 'Delivered chilled', 'Pop your Meals straight in the fridge and eat them by the use-by date on the label.'],
+        ['Minutes', 'Heat, eat, feel at home', 'Reheat until piping hot all the way through. Instructions are on every label.'],
+      ]),
+      card(
+        meals
+          .map(m => para(`<b>${e(mealLine(m))}</b><br><span style="color:${C.muted};font-size:14px;">${e(allergenText(m))}</span>`, { margin: '0 0 12px' }))
+          .join('') + para(muted('Full ingredients, with allergens in bold, are on each Meal’s page and on every label.'), { margin: '0 0 12px' }),
+        { eyebrow: 'Allergens', heading: "What's in your Meals" },
+      ),
+      card(para(e(cancelNotice()), { size: 14 }) + para(e(problemNotice), { size: 14, margin: '0 0 12px' }), { eyebrow: 'Good to know', heading: 'Cancelling and problems' }),
     ].join(''),
     footer: businessFooter(),
   });
 
   const text = [
-    `Thank you, your Order is confirmed`,
-    `Order ${order.number} · delivery on ${delivery}`,
-    s.kitchenNote ? `\n${s.kitchenNote}` : '',
-    '',
+    `${name ? `Thank you, ${name}.` : 'Thank you.'} We're cooking for you.`,
+    `Order ${order.number} · delivery on ${day}`,
+    s.kitchenNote ? `\nA note from the kitchen: ${s.kitchenNote}` : '',
+    '\nYOUR ORDER',
     ...items.map(it => (it.kind === 'single' ? `${it.qty} × ${it.label}  ${gbp(it.total)}` : `${it.label}  ${gbp(it.total)}\n  ${tally(it.meals.map(mealLine))}`)),
     order.savings ? `Pack savings  −${gbp(order.savings)}` : '',
     `Paid  ${gbp(order.total)}`,
-    order.deliveryAddress ? `\nDelivering to:\n${order.deliveryAddress}` : '',
-    '\nAllergens',
-    ...allergenList(items).map(m => `- ${mealLine(m)}: ${allergenText(m)}`),
-    '\nCancelling',
-    cancelNotice,
-    "\nA problem with your Order? Reply within 24 hours of delivery, with a photo if you can, and we'll put it right.",
-    `\n${businessConfig.business.name} · ${businessConfig.contact.address.full} · ${businessConfig.contact.email}`,
+    order.deliveryAddress ? `\nDELIVERY\n${day}\n${order.deliveryAddress}` : '',
+    '\nALLERGENS',
+    ...meals.map(m => `- ${mealLine(m)}: ${allergenText(m)}`),
+    'Full ingredients are on each Meal’s page and on every label.',
+    '\nCANCELLING AND PROBLEMS',
+    cancelNotice(),
+    problemNotice,
+    `\nView your Order: ${orderLink(order)}`,
+    `\n"Food that carries the flavour of home." The OlaJesu kitchen, Manchester`,
+    businessFooterText(),
   ]
     .filter(line => line !== '')
     .join('\n');
 
-  return { subject: `Your OlaJesu Order ${order.number} is confirmed`, html, text };
+  return { subject: `You're booked in for ${weekday(order.deliveryDate)}: Order ${order.number}`, html, text };
 }
 
 /** Sends the confirmation once; safe to call again (it checks confirmationSentAt). */
 export async function sendOrderConfirmation(payload: Payload, orderId: number) {
-  const order = await payload.findByID({ collection: 'orders', id: orderId, depth: 0, overrideAccess: true });
+  const order = await payload.findByID({ collection: 'orders', id: orderId, depth: 0, overrideAccess: true, showHiddenFields: true });
   if (!order.email || order.confirmationSentAt || !['paid', 'preparing', 'ready', 'out-for-delivery', 'delivered'].includes(order.status)) return false;
   const s = await settings(payload);
   const { subject, html, text } = confirmationEmail(order, s);
@@ -118,35 +148,64 @@ export async function notifyPaid(payload: Payload, orderId: number) {
 // ---------------------------------------------------------------------------
 // Kitchen: each new paid Order
 
+export function kitchenOrderEmail(order: Order) {
+  const day = longDate(order.deliveryDate);
+  const items = (order.items ?? []) as OrderItem[];
+  const admin = `${site()}/admin/collections/orders/${order.id}`;
+  const who = order.customerName || 'a Customer';
+  const html = emailLayout({
+    preheader: `${gbp(order.total)} from ${who} for ${day}`,
+    strip: { title: 'New Order', sub: `${gbp(order.total)} · ${day}` },
+    hero: { label: `Order ${order.number}`, line1: `New Order from ${who}.`, line2: `${gbp(order.total)} for ${weekday(order.deliveryDate)}.`, button: { label: 'Open in the dashboard', href: admin } },
+    sections: card(orderTable(order, items), { eyebrow: 'To cook', heading: "What's in it" }),
+    footer: 'Sent to the Kitchen inbox for every paid Order. Switch it off in Admin, Kitchen emails. The full lists arrive at the cut-off.',
+    signOff: false,
+  });
+  const text = `New Order ${order.number} from ${who}\n${gbp(order.total)} for ${day}\n\n${order.summary ?? ''}\n\nOpen in the dashboard: ${admin}`;
+  return { subject: `New Order ${order.number} · ${gbp(order.total)} · ${weekday(order.deliveryDate)}`, html, text };
+}
+
 export async function sendKitchenNewOrder(payload: Payload, orderId: number) {
   const s = await settings(payload);
   if (s.emailEachOrder === false) return false;
   const order = await payload.findByID({ collection: 'orders', id: orderId, depth: 0, overrideAccess: true });
-  const delivery = longDate(order.deliveryDate);
-  const admin = `${process.env.NEXT_PUBLIC_SERVER_URL || 'https://olajesu.com'}/admin/collections/orders/${order.id}`;
-  const html = emailLayout({
-    preheader: `${order.number}: ${gbp(order.total)} for ${delivery}`,
-    body: [h1(`New Order ${order.number}`), p(`<b>${gbp(order.total)}</b> · for <b>${e(delivery)}</b> · ${e(order.customerName ?? '')}`), `<pre style="font-family:inherit;white-space:pre-wrap;margin:0 0 14px;">${e(order.summary ?? '')}</pre>`, p(`<a href="${admin}" style="color:#1B4332;">Open in the dashboard</a>`)].join(''),
-    footer: 'Sent to the Kitchen inbox for every paid Order. Switch it off in Admin → Kitchen emails.',
-  });
-  const text = `New Order ${order.number}\n${gbp(order.total)} for ${delivery} · ${order.customerName ?? ''}\n\n${order.summary ?? ''}\n\n${admin}`;
-  return (await sendEmail({ to: kitchenInbox(s), subject: `New Order ${order.number} · ${gbp(order.total)} · ${delivery}`, html, text, idempotencyKey: `kitchen-order-${order.id}` })).sent;
+  return (await sendEmail({ to: kitchenInbox(s), ...kitchenOrderEmail(order), idempotencyKey: `kitchen-order-${order.id}` })).sent;
 }
 
 // ---------------------------------------------------------------------------
 // Customer: out for delivery / ready to collect
 
+export function statusEmail(order: Order) {
+  const out = order.status === 'out-for-delivery';
+  const name = firstName(order);
+  const html = emailLayout({
+    preheader: out ? 'Your Meals are on their way today. Keep your phone close.' : 'Your Meals are ready to collect from Mary Street.',
+    strip: { title: out ? 'On its way today' : 'Ready to collect', sub: `Order ${order.number}` },
+    hero: {
+      label: `Order ${order.number}`,
+      line1: name ? `Good news, ${name}.` : 'Good news.',
+      line2: out ? 'Your Meals are coming.' : 'Your Meals are ready.',
+      text: out
+        ? 'Our driver is out with your Order today. Please keep your phone close in case we need to find you.'
+        : `Your Order is ready to collect from our kitchen at ${e(contact.address.full)}. Please bring your Order number.`,
+    },
+    sections: darkPanel(out ? 'When it arrives' : 'When you get home', 'Keep it fresh', [
+      ['Fridge', 'Straight in the fridge', 'Your Meals are chilled, so pop them in the fridge as soon as you can.'],
+      ['Use-by', 'Check the label', 'Eat each Meal by the use-by date printed on its label.'],
+      ['Minutes', 'Heat, eat, feel at home', 'Reheat until piping hot all the way through.'],
+    ]),
+    footer: businessFooter(),
+  });
+  const text = out
+    ? `Good news${name ? `, ${name}` : ''}. Your Meals are on their way.\nOrder ${order.number}\n\nOur driver is out with your Order today. Please keep your phone close.\nWhen it arrives, pop your Meals straight in the fridge and eat them by the use-by date on the label.\n\n${businessFooterText()}`
+    : `Good news${name ? `, ${name}` : ''}. Your Meals are ready.\nOrder ${order.number}\n\nCollect from ${contact.address.full}. Please bring your Order number.\n\n${businessFooterText()}`;
+  return { subject: out ? `Your Meals are on their way (${order.number})` : `Your Meals are ready to collect (${order.number})`, html, text };
+}
+
 export async function sendStatusEmail(payload: Payload, order: Order, req?: PayloadRequest) {
   if (!order.email || (order.status !== 'out-for-delivery' && order.status !== 'ready')) return false;
   const s = await settings(payload, req);
-  const out = order.status === 'out-for-delivery';
-  const title = out ? 'Your Meals are on their way' : 'Your Meals are ready to collect';
-  const line = out
-    ? 'Our driver is out with your Order today. Please keep your phone nearby, and pop the Meals in the fridge as soon as they arrive.'
-    : `Your Order is ready to collect from ${businessConfig.contact.address.full}. Please bring your Order number.`;
-  const html = emailLayout({ preheader: `${order.number}: ${title.toLowerCase()}`, body: [h1(title), p(`Order <b>${e(order.number)}</b>`), p(e(line))].join(''), footer: businessFooter() });
-  const text = `${title}\nOrder ${order.number}\n\n${line}\n\n${businessConfig.business.name} · ${businessConfig.contact.address.full}`;
-  return (await sendEmail({ to: order.email, subject: `${title} (${order.number})`, html, text, replyTo: kitchenInbox(s), idempotencyKey: `status-${order.id}-${order.status}` })).sent;
+  return (await sendEmail({ to: order.email, ...statusEmail(order), replyTo: kitchenInbox(s), idempotencyKey: `status-${order.id}-${order.status}` })).sent;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +229,54 @@ export function kitchenLists(orders: Order[]) {
 }
 const postcode = (o: Order) => (o.deliveryAddress ?? '').trim().split('\n').pop() ?? '';
 
+export function listsEmail(orders: Order[], deliveryDate: string) {
+  const day = longDate(deliveryDate);
+  const lists = kitchenLists(orders);
+  const meals = lists.cook.reduce((n, [, c]) => n + c, 0);
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const counts = (rows: [string, number][]) =>
+    table(rows.map(([n, c], i) => moneyRow(e(n), `<span style="color:${C.jollof};font-size:18px;">${c}</span>`, { last: i === rows.length - 1 })).join(''));
+
+  const html = emailLayout({
+    preheader: `${plural(orders.length, 'Order')}, ${plural(meals, 'Meal')} for ${day}`,
+    strip: { title: 'Kitchen lists', sub: `Cut-off passed · ${day}` },
+    hero: { label: 'Orders are closed', line1: `${plural(orders.length, 'Order')}, ${plural(meals, 'Meal')}.`, line2: `For ${day}.` },
+    sections: orders.length
+      ? [
+          card(counts(lists.cook), { eyebrow: 'Cook list', heading: 'What to cook' }),
+          lists.addOns.length ? card(counts(lists.addOns), { eyebrow: 'Cook list', heading: 'Add-ons' }) : '',
+          card(
+            lists.packing
+              .map(o => para(`<b>${e(o.number)}</b> · ${e(o.customerName ?? '')}<br><span style="white-space:pre-wrap;color:${C.muted};font-size:14px;">${e(o.summary ?? '')}</span>`, { margin: '0 0 14px' }))
+              .join(''),
+            { eyebrow: 'Packing list', heading: 'What goes in each Order' },
+          ),
+          card(
+            lists.delivery
+              .map(o => para(`<b>${e(o.number)}</b> · ${e(o.customerName ?? '')} · ${e(o.phone ?? '')}<br><span style="color:${C.muted};font-size:14px;">${e(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}</span>`, { margin: '0 0 14px' }))
+              .join('') + para(muted('Sorted by postcode. Contains Customers’ personal details: keep it to the kitchen.'), { margin: '0 0 12px' }),
+            { eyebrow: 'Delivery list', heading: 'Where it all goes' },
+          ),
+        ].join('')
+      : card(para('No Orders for this delivery day.', { margin: '0 0 12px' })),
+    footer: 'Sent to the Kitchen inbox at each cut-off.',
+    signOff: false,
+  });
+  const text = orders.length
+    ? [
+        `Kitchen lists for ${day}: ${plural(orders.length, 'Order')}, ${plural(meals, 'Meal')}`,
+        '\nCOOK LIST',
+        ...lists.cook.map(([n, c]) => `${c} × ${n}`),
+        ...(lists.addOns.length ? ['\nADD-ONS', ...lists.addOns.map(([n, c]) => `${c} × ${n}`)] : []),
+        '\nPACKING LIST',
+        ...lists.packing.map(o => `${o.number} · ${o.customerName ?? ''}\n${o.summary ?? ''}\n`),
+        '\nDELIVERY LIST (by postcode)',
+        ...lists.delivery.map(o => `${o.number} · ${o.customerName ?? ''} · ${o.phone ?? ''}\n${(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}\n`),
+      ].join('\n')
+    : `Kitchen lists for ${day}\nNo Orders for this delivery day.`;
+  return { subject: `Kitchen lists for ${day}: ${plural(orders.length, 'Order')}, ${plural(meals, 'Meal')}`, html, text };
+}
+
 export async function sendCutoffLists(payload: Payload, deliveryDate: string) {
   const { docs } = await payload.find({
     collection: 'orders',
@@ -179,44 +286,5 @@ export async function sendCutoffLists(payload: Payload, deliveryDate: string) {
     where: { and: [{ deliveryDate: { equals: deliveryDate } }, { status: { in: [...LIST_STATUSES] } }] },
   });
   const s = await settings(payload);
-  const day = longDate(deliveryDate);
-  const lists = kitchenLists(docs);
-  const meals = lists.cook.reduce((n, [, c]) => n + c, 0);
-
-  const table = (rows: [string, number][]) =>
-    `<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 0 16px;">${rows.map(([n, c]) => `<tr><td style="padding:3px 16px 3px 0;"><b>${c}</b></td><td>${e(n)}</td></tr>`).join('')}</table>`;
-  const html = emailLayout({
-    preheader: `${docs.length} Orders, ${meals} Meals for ${day}`,
-    body: docs.length
-      ? [
-          h1(`Lists for ${day}`),
-          p(`${docs.length} Order${docs.length === 1 ? '' : 's'} · ${meals} Meal${meals === 1 ? '' : 's'}`),
-          `<h2 style="font-size:17px;margin:18px 0 8px;">Cook list</h2>`,
-          table(lists.cook),
-          lists.addOns.length ? `<h3 style="font-size:14px;margin:0 0 6px;">Add-ons</h3>${table(lists.addOns)}` : '',
-          `<h2 style="font-size:17px;margin:18px 0 8px;">Packing list</h2>`,
-          lists.packing.map(o => `<p style="margin:0 0 12px;"><b>${e(o.number)}</b> · ${e(o.customerName ?? '')}<br><span style="white-space:pre-wrap;">${e(o.summary ?? '')}</span></p>`).join(''),
-          `<h2 style="font-size:17px;margin:18px 0 8px;">Delivery list</h2>`,
-          lists.delivery
-            .map(o => `<p style="margin:0 0 12px;"><b>${e(o.number)}</b> · ${e(o.customerName ?? '')} · ${e(o.phone ?? '')}<br>${e(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}</p>`)
-            .join(''),
-          p(muted('Sorted by postcode. Contains Customers’ personal details: keep it to the kitchen.')),
-        ].join('')
-      : [h1(`Lists for ${day}`), p('No Orders for this delivery day.')].join(''),
-    footer: 'Sent to the Kitchen inbox at each Cut-off.',
-  });
-  const text = docs.length
-    ? [
-        `Lists for ${day}: ${docs.length} Orders, ${meals} Meals`,
-        '\nCOOK LIST',
-        ...lists.cook.map(([n, c]) => `${c} × ${n}`),
-        ...(lists.addOns.length ? ['\nAdd-ons', ...lists.addOns.map(([n, c]) => `${c} × ${n}`)] : []),
-        '\nPACKING LIST',
-        ...lists.packing.map(o => `${o.number} · ${o.customerName ?? ''}\n${o.summary ?? ''}\n`),
-        '\nDELIVERY LIST (by postcode)',
-        ...lists.delivery.map(o => `${o.number} · ${o.customerName ?? ''} · ${o.phone ?? ''}\n${(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}\n`),
-      ].join('\n')
-    : `Lists for ${day}\nNo Orders for this delivery day.`;
-
-  return sendEmail({ to: kitchenInbox(s), subject: `Kitchen lists for ${day}: ${docs.length} Orders, ${meals} Meals`, html, text, idempotencyKey: `lists-${deliveryDate}` });
+  return sendEmail({ to: kitchenInbox(s), ...listsEmail(docs, deliveryDate), idempotencyKey: `lists-${deliveryDate}` });
 }

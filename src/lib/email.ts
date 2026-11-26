@@ -47,24 +47,135 @@ export async function sendEmail(email: Email): Promise<{ sent: boolean; error?: 
 }
 
 export const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const e = escapeHtml;
+
+/*
+ * Email pieces in the shop's A4 "Bold landing" style: cream page, a dark strip like the
+ * countdown, heavy two-tone headlines, orange eyebrow labels, rounded white cards, green pill
+ * buttons and a dark panel like "What's in every pot".
+ *
+ * Email apps ignore most CSS, so everything is tables and inline styles. Plus Jakarta Sans
+ * loads where the app allows web fonts (Apple Mail, iOS); elsewhere it falls back to Helvetica.
+ */
+export const C = {
+  ink: '#1A1A1A',
+  cream: '#F7F2E8',
+  blush: '#FBF3EC',
+  card: '#EDE6D3',
+  border: '#DDD6C4',
+  green: '#1B4332',
+  muted: '#6B6355',
+  jollof: '#C2652A',
+  amber: '#F4A261',
+  white: '#FFFFFF',
+};
+const FONT = `'Plus Jakarta Sans', Helvetica, Arial, sans-serif`;
+
+export const site = () => process.env.NEXT_PUBLIC_SERVER_URL || 'https://olajesu.com';
+
+/** Small uppercase orange label above a section, as on the site. */
+export const eyebrow = (s: string, color = C.jollof) =>
+  `<div style="font-family:${FONT};font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:${color};margin:0 0 6px;">${e(s)}</div>`;
+
+/** Section heading, heavy and uppercase, as on the site. */
+export const heading = (s: string, color = C.ink) =>
+  `<div style="font-family:${FONT};font-size:20px;line-height:1.15;font-weight:800;letter-spacing:-0.3px;text-transform:uppercase;color:${color};margin:0 0 12px;">${e(s)}</div>`;
+
+export const para = (html: string, opts: { size?: number; color?: string; margin?: string } = {}) =>
+  `<p style="font-family:${FONT};font-size:${opts.size ?? 15}px;line-height:1.6;color:${opts.color ?? C.ink};margin:${opts.margin ?? '0 0 14px'};">${html}</p>`;
+
+export const muted = (html: string) => `<span style="color:${C.muted};font-size:13px;">${html}</span>`;
+
+/** Green pill button that works in every email app (a table cell, not CSS). */
+export const button = (label: string, href: string) =>
+  `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 4px;"><tr><td style="background:${C.green};border-radius:999px;">
+<a href="${e(href)}" style="display:inline-block;padding:14px 24px;font-family:${FONT};font-size:13px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;color:${C.white};text-decoration:none;border-radius:999px;">${e(label)} &rarr;</a></td></tr></table>`;
+
+/** Rounded white card with an optional eyebrow and heading. */
+export const card = (html: string, opts: { eyebrow?: string; heading?: string; background?: string; border?: boolean } = {}) =>
+  `<tr><td style="padding:0 16px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${opts.background ?? C.white};border-radius:18px;${opts.border === false ? '' : `border:1px solid ${C.border};`}"><tr><td style="padding:20px 20px 8px;">
+${opts.eyebrow ? eyebrow(opts.eyebrow) : ''}${opts.heading ? heading(opts.heading) : ''}${html}</td></tr></table></td></tr>`;
+
+/** The dark "What's in every pot" panel: a big amber figure beside a line of text. */
+export const darkPanel = (label: string, title: string, rows: [string, string, string][]) =>
+  `<tr><td style="padding:0 16px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.ink};border-radius:20px;"><tr><td style="padding:22px 20px 10px;">
+${eyebrow(label, C.amber)}${heading(title, C.white)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows
+    .map(
+      ([big, t, text], i) =>
+        `<tr><td valign="top" style="padding:12px 12px 12px 0;${i ? 'border-top:1px solid #333333;' : ''}width:84px;font-family:${FONT};font-size:19px;font-weight:800;color:${C.amber};">${e(big)}</td><td valign="top" style="padding:12px 0;${i ? 'border-top:1px solid #333333;' : ''}font-family:${FONT};"><div style="font-size:14px;font-weight:800;color:${C.white};">${e(t)}</div><div style="font-size:13px;line-height:1.5;color:#BDB6A8;">${text}</div></td></tr>`,
+    )
+    .join('')}</table></td></tr></table></td></tr>`;
+
+/** A row in a money table: label on the left, amount on the right. */
+export const moneyRow = (label: string, amount: string, opts: { bold?: boolean; color?: string; sub?: string; last?: boolean } = {}) =>
+  `<tr><td style="padding:10px 0;${opts.last ? '' : `border-bottom:1px solid ${C.card};`}font-family:${FONT};font-size:14px;color:${opts.color ?? C.ink};${opts.bold ? 'font-weight:800;font-size:16px;' : 'font-weight:600;'}">${label}${opts.sub ? `<div style="font-weight:500;font-size:12px;line-height:1.5;color:${C.muted};margin-top:2px;">${opts.sub}</div>` : ''}</td><td align="right" valign="top" style="padding:10px 0 10px 12px;${opts.last ? '' : `border-bottom:1px solid ${C.card};`}font-family:${FONT};font-size:14px;white-space:nowrap;color:${opts.color ?? C.ink};${opts.bold ? 'font-weight:800;font-size:16px;' : 'font-weight:700;'}">${amount}</td></tr>`;
+
+export const table = (rows: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">${rows}</table>`;
+
+export type Hero = {
+  /** The little pill above the headline, e.g. "Order OJ-ABC123". */
+  label: string;
+  /** Headline in two tones: first line ink, second line green. */
+  line1: string;
+  line2: string;
+  text?: string;
+  button?: { label: string; href: string };
+};
 
 /**
- * The branded email shell: logo, cream and green, one column that reads well on a phone.
- * Table-based and inline-styled, because email apps ignore most CSS.
+ * The full email: dark strip, logo, a blush hero with a two-tone headline, the content
+ * cards, the "flavour of home" sign-off and the business footer.
  */
-export function emailLayout({ preheader, body, footer }: { preheader: string; body: string; footer: string }) {
-  const site = process.env.NEXT_PUBLIC_SERVER_URL || 'https://olajesu.com';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OlaJesu</title></head>
-<body style="margin:0;padding:0;background:#F7F2E8;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F2E8;"><tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:16px;font-family:Helvetica,Arial,sans-serif;color:#1A1A1A;">
-<tr><td style="padding:20px 24px;border-bottom:1px solid #DDD6C4;"><img src="${site}/olajesu_logo.png" alt="OlaJesu" height="44" style="display:block;height:44px;"></td></tr>
-<tr><td style="padding:24px;font-size:15px;line-height:1.55;">${body}</td></tr>
-<tr><td style="padding:16px 24px;border-top:1px solid #DDD6C4;font-size:12px;line-height:1.6;color:#6B6355;">${footer}</td></tr>
-</table></td></tr></table></body></html>`;
+export function emailLayout({
+  preheader,
+  strip,
+  hero,
+  sections,
+  footer,
+  signOff = true,
+}: {
+  preheader: string;
+  strip: { title: string; sub?: string };
+  hero: Hero;
+  /** Rows made with card(), darkPanel() or raw <tr> rows. */
+  sections: string;
+  footer: string;
+  signOff?: boolean;
+}) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>OlaJesu</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${e(preheader)}&#8199;&#65279;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};"><tr><td align="center" style="padding:0 0 28px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+
+<tr><td align="center" style="background:${C.ink};padding:14px 16px 13px;font-family:${FONT};">
+<div style="font-size:14px;font-weight:800;letter-spacing:0.6px;color:${C.white};text-transform:uppercase;">${e(strip.title)}</div>
+${strip.sub ? `<div style="font-size:11px;font-weight:700;letter-spacing:0.4px;color:${C.amber};text-transform:uppercase;margin-top:3px;">${e(strip.sub)}</div>` : ''}
+</td></tr>
+
+<tr><td align="center" style="background:${C.white};padding:12px 16px;border-bottom:1px solid ${C.border};">
+<a href="${site()}"><img src="${site()}/olajesu_logo.png" alt="OlaJesu" height="48" style="display:block;height:48px;border:0;"></a></td></tr>
+
+<tr><td align="center" style="background:${C.blush};padding:30px 22px 28px;">
+<span style="display:inline-block;font-family:${FONT};font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:${C.jollof};background:${C.white};border:1px solid #E8C3A8;border-radius:999px;padding:6px 12px;">&#9679; ${e(hero.label)}</span>
+<div style="font-family:${FONT};font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.7px;color:${C.ink};margin:16px 0 0;">${e(hero.line1)}</div>
+<div style="font-family:${FONT};font-size:28px;line-height:1.12;font-weight:800;letter-spacing:-0.7px;color:${C.green};margin:0 0 ${hero.text ? 12 : 4}px;">${e(hero.line2)}</div>
+${hero.text ? para(hero.text, { color: C.muted, margin: '0 auto 6px' }) : ''}
+${hero.button ? `<div align="center">${button(hero.button.label, hero.button.href)}</div>` : ''}
+</td></tr>
+
+<tr><td style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>
+${sections}
+
+${
+  signOff
+    ? `<tr><td align="center" style="padding:10px 24px 18px;"><div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:${C.green};">&ldquo;Food that carries the flavour of home.&rdquo;</div>
+<div style="font-family:${FONT};font-size:12px;font-weight:700;color:${C.muted};margin-top:6px;">The OlaJesu kitchen, Manchester</div></td></tr>`
+    : ''
 }
 
-export const h1 = (s: string) => `<h1 style="margin:0 0 8px;font-size:24px;line-height:1.2;color:#1B4332;">${escapeHtml(s)}</h1>`;
-export const p = (html: string) => `<p style="margin:0 0 14px;">${html}</p>`;
-export const muted = (html: string) => `<span style="color:#6B6355;font-size:13px;">${html}</span>`;
+<tr><td align="center" style="padding:16px 24px 0;border-top:1px solid ${C.border};font-family:${FONT};font-size:12px;line-height:1.7;color:${C.muted};">${footer}</td></tr>
+</table></td></tr></table></body></html>`;
+}

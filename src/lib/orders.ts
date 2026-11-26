@@ -3,6 +3,7 @@ import type { Payload } from 'payload';
 import type Stripe from 'stripe';
 
 import { allergenLabel } from './allergens';
+import { tally } from './text';
 import { addOnById, addOnsPence, describeChoice, mealById, mealPence, packDiscountPence, priceBasket, type Basket, type Choice, type Menu } from './basket';
 
 const pounds = (pence: number) => Math.round(pence) / 100;
@@ -99,12 +100,6 @@ function orderMeal(menu: Menu, choice: Choice, discountPercent: number): OrderMe
   };
 }
 
-/** "Egusi Soup × 3, Jollof Rice, chicken" from a list with repeats. */
-export function tally(names: string[]) {
-  const counts = new Map<string, number>();
-  for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
-  return [...counts].map(([n, c]) => (c > 1 ? `${n} × ${c}` : n)).join(', ');
-}
 
 function formatAddress(details: Stripe.Checkout.Session['collected_information'] | null | undefined, customer: Stripe.Checkout.Session['customer_details']) {
   const shipping = details?.shipping_details;

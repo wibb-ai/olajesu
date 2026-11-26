@@ -1,0 +1,75 @@
+import { confirmationEmail, kitchenOrderEmail, listsEmail, statusEmail } from '../../../../lib/orderEmails';
+import type { OrderItem, OrderMeal } from '../../../../lib/orders';
+import type { Order } from '../../../../payload-types';
+
+/**
+ * Preview of every Order email with sample Orders, for designing and checking the wording.
+ * Local dev and Vercel previews only; Production returns 404. No database, nothing is sent.
+ *
+ *   /api/dev/emails                      list
+ *   /api/dev/emails?name=confirmation    one email as it would arrive
+ *   /api/dev/emails?name=confirmation&format=text   its plain-text version
+ */
+export async function GET(request: Request) {
+  if (process.env.VERCEL_ENV === 'production') return new Response('Not found', { status: 404 });
+  const url = new URL(request.url);
+  const name = url.searchParams.get('name');
+  const emails = build();
+
+  if (!name || !(name in emails)) {
+    const links = Object.entries(emails)
+      .map(([key, m]) => `<li style="margin:8px 0;"><a href="?name=${key}">${key}</a> · <a href="?name=${key}&format=text">plain text</a><br><small>${m.subject}</small></li>`)
+      .join('');
+    return html(`<!doctype html><meta charset="utf-8"><title>Email previews</title><body style="font-family:system-ui;padding:24px;max-width:640px;"><h1>Order email previews</h1><p>Sample Orders, nothing sent.</p><ul>${links}</ul></body>`);
+  }
+  const email = emails[name as keyof typeof emails];
+  if (url.searchParams.get('format') === 'text') return new Response(`Subject: ${email.subject}\n\n${email.text}`, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+  return html(email.html);
+}
+
+const html = (body: string) => new Response(body, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex' } });
+
+function meal(name: string, allergens: string[], addOns: string[] = [], price = 13, paid = price): OrderMeal {
+  return { name, addOns: addOns.join(', '), addOnNames: addOns, mealPrice: price, paidForMeal: paid, addOnsPrice: addOns.length * 3, allergens, mayContain: '' };
+}
+
+function sample(over: Partial<Order> = {}): Order {
+  const egusi = meal('Egusi Soup', ['Fish', 'Crustaceans', 'Celery'], ['Pounded Yam'], 13, 11.7);
+  const items: OrderItem[] = [
+    { kind: 'single', label: 'Jollof Rice, chicken + Plantain', qty: 2, discountPercent: 0, meals: [meal('Jollof Rice, chicken', ['Celery'], ['Plantain'], 10)], total: 26 },
+    { kind: 'pack', label: '5-Pack, 10% off each Meal', qty: 5, discountPercent: 10, meals: [egusi, egusi, egusi, meal('Efo Riro', ['Fish', 'Crustaceans', 'Celery'], [], 15, 13.5), meal('Efo Riro', ['Fish', 'Crustaceans', 'Celery'], [], 15, 13.5)], total: 71.1 },
+  ];
+  return {
+    id: 1042,
+    number: 'OJ-7KQ4MX',
+    status: 'paid',
+    deliveryDate: '2026-11-28T00:00:00.000Z',
+    summary: '2 × Jollof Rice, chicken + Plantain\n5-Pack, 10% off each Meal:\nEgusi Soup + Pounded Yam × 3\nEfo Riro × 2',
+    items,
+    subtotal: 97.1,
+    savings: 6.9,
+    total: 97.1,
+    customerName: 'Adaeze Okafor',
+    email: 'ada@example.com',
+    phone: '+44 7700 900123',
+    deliveryAddress: 'Adaeze Okafor\n12 Example Road\nManchester\nM14 5AB',
+    accessToken: 'sample',
+    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    ...over,
+  } as Order;
+}
+
+function build() {
+  const order = sample();
+  const second = sample({ id: 1043, number: 'OJ-3HV9TC', customerName: 'Tunde Bello', deliveryAddress: 'Tunde Bello\n4 Sample Street\nSalford\nM5 4WT', summary: '3 × Egusi Soup + Pounded Yam', items: [{ kind: 'single', label: 'Egusi Soup + Pounded Yam', qty: 3, discountPercent: 0, meals: [meal('Egusi Soup', ['Fish', 'Crustaceans', 'Celery'], ['Pounded Yam'])], total: 49.5 }], savings: 0, total: 49.5, subtotal: 49.5 });
+  return {
+    confirmation: confirmationEmail(order, { kitchenNote: null }),
+    'confirmation-with-note': confirmationEmail(order, { kitchenNote: 'We’re closed from 24 to 27 December. Orders for 2 January open on Boxing Day.' }),
+    'out-for-delivery': statusEmail({ ...order, status: 'out-for-delivery' }),
+    'ready-to-collect': statusEmail({ ...order, status: 'ready' }),
+    'kitchen-new-order': kitchenOrderEmail(order),
+    'kitchen-lists': listsEmail([order, second], '2026-11-28'),
+    'kitchen-lists-empty': listsEmail([], '2026-12-05'),
+  };
+}
