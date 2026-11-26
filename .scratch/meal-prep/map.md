@@ -8,7 +8,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 
 ## Notes
 
-- **Domain:** food e-commerce for a Manchester Nigerian kitchen. Glossary: [CONTEXT.md](../../CONTEXT.md) (Meal, Option, Add-on, Pack, Order, Catering Enquiry, Customer, Account, Login link, Marketing consent, Cut-off, Cancellation, Refund, kitchen lists, Kitchen inbox, Admin Dashboard, Master admin, Kitchen, Driver, Activity log, Subscription).
+- **Domain:** food e-commerce for a Manchester Nigerian kitchen. Glossary: [CONTEXT.md](../../CONTEXT.md) (Meal, Option, Add-on, Pack, Order, Catering Enquiry, Customer, Account, Login link, Marketing consent, Cut-off, Cancellation, Refund, kitchen lists, Kitchen inbox, Admin Dashboard, Master admin, Kitchen, Activity log, Subscription).
 - **Skills:** grilling + domain-modeling for decisions; research for outside facts; prototype for UI questions.
 - **Plan, don't do:** tickets produce decisions. Building happens after the map, one phase at a time, together in sessions. No fixed launch date.
 - **Settled in charting (2026-11-21/22):**
@@ -37,7 +37,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [What is the refunds and cancellations policy?](issues/08-refunds-cancellations.md): free cancellation up to the Cut-off, none after; no editing paid Orders; refund or replacement for problems the kitchen is responsible for (reports asked for within 24 hours, never as a legal limit); refunds made through Stripe from the dashboard, a role-restricted action the Master admin always has; plain-English terms drafted, solicitor review recommended.
 - [What do the Customer and the kitchen get told, and when?](issues/09-notifications.md): email only, through Resend, from orders@olajesu.com; six Customer emails, starting with the legally required confirmation, and no marketing; the kitchen gets each Order, Cancellation and problem report, plus the Cook, Packing and Delivery lists at the Cut-off; wording fixed, a few settings editable; Kitchen inbox address still to confirm.
 - [How is the site restructured around meal prep?](issues/10-site-restructure.md): the homepage is the A4 shop; catering moves to `/catering` unchanged; one page per Meal; Help, Terms, Privacy, Account and Order pages; per-page search titles, a sitemap and structured data; old `#order` links sent on to catering; the live site switches only when ordering goes live.
-- [Who uses the Admin Dashboard, and with what access?](issues/11-staff-roles.md): three roles, Master admin, Kitchen and Driver, with a rights table; two-step login required for Master admins; simple screens for the day for Kitchen and Driver; individual logins and an Activity log; leavers are switched off, never deleted.
+- [Who uses the Admin Dashboard, and with what access?](issues/11-staff-roles.md): two roles, Master admin and Kitchen (no Driver: OlaJesu delivers its own Meals), with a rights table; two-step login required for Master admins; simple screens for the day for Kitchen, including deliveries; individual logins and an Activity log; leavers are switched off, never deleted.
 - [How much can be ordered per delivery day, and what's left before building?](issues/12-capacity-and-loose-ends.md): optional Daily limits per Meal and per delivery day, blank unless set; delivery rules built as editable settings, values chosen before launch; promo codes and Subscriptions ruled out of scope; the remaining open topics became the Before launch checklist.
 
 ## Not yet specified

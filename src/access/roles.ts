@@ -1,10 +1,9 @@
 import type { Access, FieldAccess, PayloadRequest } from 'payload';
 
-/** Staff roles from the staff-roles decision (CONTEXT.md: Master admin, Kitchen, Driver). */
+/** Staff roles from the staff-roles decision (CONTEXT.md: Master admin, Kitchen). OlaJesu delivers its own Meals, so there is no Driver role. */
 export const ROLES = [
   { label: 'Master admin', value: 'master-admin' },
   { label: 'Kitchen', value: 'kitchen' },
-  { label: 'Driver', value: 'driver' },
 ] as const;
 
 export type Role = (typeof ROLES)[number]['value'];

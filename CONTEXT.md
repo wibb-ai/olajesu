@@ -67,10 +67,7 @@ Where OlaJesu staff manage Orders, Meals, Packs and prices. Prices and the menu 
 The top staff role in the Admin Dashboard, with every right, including Refunds and kitchen cancellations. Other staff roles get only the rights given to them. There is always at least one, and Master admins must use two-step login.
 
 **Kitchen** (staff role)
-Cooks and packs: records Allergen checks, sets Meal availability, and works from the Cook, Packing and Delivery lists. Sees Customers' names and Order contents, and delivery details only on the delivery day. No prices, Refunds or Customer emails.
-
-**Driver** (staff role)
-Delivers: sees only the day's Delivery list (address, phone, notes) and marks Orders out for delivery or delivered.
+Cooks, packs and delivers: records Allergen checks, sets Meal availability, and works from the Cook, Packing and Delivery lists. OlaJesu delivers its own Meals, so there is no separate Driver role. Sees Customers' names and Order contents, and delivery details only on the delivery day. No prices, Refunds or Customer emails.
 
 **Activity log**
 The record of who did each sensitive action in the Admin Dashboard, and when: price changes, Meal availability, Allergen checks, Refunds, kitchen cancellations, Account deletions and staff changes. Staff are switched off, never deleted, so their name stays on it.

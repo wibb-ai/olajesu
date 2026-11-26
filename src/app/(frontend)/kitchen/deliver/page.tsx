@@ -11,12 +11,12 @@ const mapsLink = (address: string) => `https://www.google.com/maps/search/?api=1
 
 /**
  * Delivery list, by postcode: address with a maps link, tap to call, and the delivery buttons.
- * Kitchen and Driver see addresses only on the delivery day itself (staff-roles ticket).
+ * Kitchen staff see addresses only on the delivery day itself (staff-roles ticket).
  */
 export default async function Deliver({ searchParams }: Props) {
-  const { payload, staff } = await requireStaff(['master-admin', 'kitchen', 'driver']);
+  const { payload, staff } = await requireStaff(['master-admin', 'kitchen']);
   const asked = (await searchParams).date;
-  // Kitchen and Driver only ever see today; the Master admin can look at any day.
+  // Kitchen staff only ever see today; the Master admin can look at any day.
   const { date, orders, days } = await pickDay(payload, staff.role === 'master-admin' ? asked : londonToday());
   const allowed = canSeeDeliveryDetails(staff, date);
   const sorted = [...orders].sort((a, b) => postcode(a.deliveryAddress ?? '').localeCompare(postcode(b.deliveryAddress ?? ''), 'en', { numeric: true }));

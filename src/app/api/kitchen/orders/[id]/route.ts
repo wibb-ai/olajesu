@@ -8,8 +8,8 @@ type Action = 'packed' | 'unpacked' | 'out-for-delivery' | 'delivered';
 
 /**
  * The buttons on the screens for the day. Orders are otherwise changed only by the Master admin;
- * this endpoint lets Kitchen tick off packing and lets Kitchen and Driver mark deliveries, on the
- * delivery day only (staff-roles ticket). "Out for delivery" emails the Customer.
+ * this endpoint lets Kitchen staff tick off packing and mark deliveries, on the delivery day only
+ * (staff-roles ticket). "Out for delivery" emails the Customer.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!fromThisSite(request)) return json({ error: 'Not allowed.' }, 403);
@@ -25,7 +25,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   switch (body.action) {
     case 'packed':
     case 'unpacked':
-      if (staff.role === 'driver') return json({ error: 'Not allowed.' }, 403);
       await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { packedAt: body.action === 'packed' ? new Date().toISOString() : null } });
       return json({ ok: true });
 

@@ -11,7 +11,7 @@ import s from '../shop/shop.module.css';
 const TABS = [
   { href: '/kitchen/cook', label: 'Cook', roles: ['master-admin', 'kitchen'] },
   { href: '/kitchen/pack', label: 'Pack', roles: ['master-admin', 'kitchen'] },
-  { href: '/kitchen/deliver', label: 'Deliver', roles: ['master-admin', 'kitchen', 'driver'] },
+  { href: '/kitchen/deliver', label: 'Deliver', roles: ['master-admin', 'kitchen'] },
 ] as const;
 
 /** The frame of the screens for the day: big tabs for a phone, the staff member's name, sign out. */
@@ -27,7 +27,7 @@ export function KitchenChrome({ role, name, children }: { role: Role | null; nam
           {role && (
             <nav className={s.nav} aria-label="Kitchen">
               {name && <span className={s.navOptional} style={{ fontWeight: 600, color: 'var(--muted)' }}>{name}</span>}
-              {role !== 'driver' && <Link href="/admin">Dashboard</Link>}
+              <Link href="/admin">Dashboard</Link>
               <SignOut />
             </nav>
           )}

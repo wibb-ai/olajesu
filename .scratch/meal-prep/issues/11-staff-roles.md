@@ -14,7 +14,11 @@ Who logs into the Admin Dashboard (owner, kitchen staff, a driver, someone handl
 
 ## Answer
 
-Decided 2026-11-26 by grilling. The glossary terms Master admin, Kitchen, Driver and Activity log are in [CONTEXT.md](../../CONTEXT.md).
+Decided 2026-11-26 by grilling.
+
+**Amended 2026-11-26:** there is no Driver role. OlaJesu delivers its own Meals, so the people delivering are Kitchen staff or the Master admin. The Deliver screen is theirs, under the same rule: delivery details only on the delivery day for Kitchen. The original answer is kept below for the record.
+
+The glossary terms Master admin, Kitchen and Activity log are in [CONTEXT.md](../../CONTEXT.md).
 
 **Today (checked in the code):** one staff collection, with a name field and a lock after 5 failed logins for 10 minutes. No roles yet.
 

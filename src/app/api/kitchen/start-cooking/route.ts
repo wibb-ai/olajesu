@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!fromThisSite(request)) return json({ error: 'Not allowed.' }, 403);
   const payload = await getPayload({ config });
   const staff = await currentStaff(payload);
-  if (!staff || staff.role === 'driver') return json({ error: 'Not allowed.' }, 403);
+  if (!staff) return json({ error: 'Not allowed.' }, 403);
 
   const body = (await request.json().catch(() => ({}))) as { date?: unknown };
   const date = typeof body.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : null;

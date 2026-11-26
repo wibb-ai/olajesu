@@ -90,7 +90,7 @@ export function StartCooking({ date, paid }: { date: string; paid: number }) {
   );
 }
 
-/** Sign-in for Kitchen and Driver staff, straight into the screens. Uses Payload's own login. */
+/** Sign-in for kitchen staff, straight into the screens. Uses Payload's own login. */
 export function StaffLogin() {
   const router = useRouter();
   const [email, setEmail] = useState('');

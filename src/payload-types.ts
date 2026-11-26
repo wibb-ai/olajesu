@@ -399,7 +399,7 @@ export interface AddOn {
 export interface User {
   id: number;
   name?: string | null;
-  role: 'master-admin' | 'kitchen' | 'driver';
+  role: 'master-admin' | 'kitchen';
   /**
    * Untick when someone leaves. They are signed out at once and kept on past records.
    */

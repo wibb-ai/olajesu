@@ -6,7 +6,7 @@ import type { Role } from '../access/roles';
 import type { User } from '../payload-types';
 
 /*
- * The screens for the day (staff-roles ticket): Kitchen and Driver staff work from simple phone
+ * The screens for the day (staff-roles ticket): kitchen staff work from simple phone
  * screens at /kitchen. Delivery details (address, phone) are shown to them only on the delivery
  * day itself; the Master admin sees any day.
  */

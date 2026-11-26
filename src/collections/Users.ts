@@ -23,9 +23,8 @@ export const Users: CollectionConfig = {
     lockTime: 10 * 60 * 1000,
   },
   access: {
-    // A switched-off login can't open the dashboard, even with a valid session. Drivers only
-    // use the screens for the day at /kitchen (staff-roles ticket).
-    admin: ({ req }) => { const u = staff(req); return !!u && u.role !== 'driver'; },
+    // A switched-off login can't open the dashboard, even with a valid session.
+    admin: ({ req }) => staff(req) !== null,
     create: isMasterAdmin,
     read: ({ req }) => {
       const user = staff(req);

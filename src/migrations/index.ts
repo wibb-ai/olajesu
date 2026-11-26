@@ -4,6 +4,7 @@ import * as migration_20261126_190032_orders from './20261126_190032_orders';
 import * as migration_20261126_192934_kitchen_emails from './20261126_192934_kitchen_emails';
 import * as migration_20261126_200802_accounts from './20261126_200802_accounts';
 import * as migration_20261126_203700_kitchen_screens from './20261126_203700_kitchen_screens';
+import * as migration_20261126_204959_remove_driver_role from './20261126_204959_remove_driver_role';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261126_203700_kitchen_screens.up,
     down: migration_20261126_203700_kitchen_screens.down,
-    name: '20261126_203700_kitchen_screens'
+    name: '20261126_203700_kitchen_screens',
+  },
+  {
+    up: migration_20261126_204959_remove_driver_role.up,
+    down: migration_20261126_204959_remove_driver_role.down,
+    name: '20261126_204959_remove_driver_role'
   },
 ];

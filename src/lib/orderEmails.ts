@@ -186,7 +186,7 @@ export function statusEmail(order: Order) {
       line1: name ? `Good news, ${name}.` : 'Good news.',
       line2: out ? 'Your Meals are coming.' : 'Your Meals are ready.',
       text: out
-        ? 'Our driver is out with your Order today. Please keep your phone close in case we need to find you.'
+        ? "We're out delivering your Order today. Please keep your phone close in case we need to find you."
         : `Your Order is ready to collect from our kitchen at ${e(contact.address.full)}. Please bring your Order number.`,
     },
     sections: darkPanel(out ? 'When it arrives' : 'When you get home', 'Keep it fresh', [
@@ -197,7 +197,7 @@ export function statusEmail(order: Order) {
     footer: businessFooter(),
   });
   const text = out
-    ? `Good news${name ? `, ${name}` : ''}. Your Meals are on their way.\nOrder ${order.number}\n\nOur driver is out with your Order today. Please keep your phone close.\nWhen it arrives, pop your Meals straight in the fridge and eat them by the use-by date on the label.\n\n${businessFooterText()}`
+    ? `Good news${name ? `, ${name}` : ''}. Your Meals are on their way.\nOrder ${order.number}\n\nWe're out delivering your Order today. Please keep your phone close.\nWhen it arrives, pop your Meals straight in the fridge and eat them by the use-by date on the label.\n\n${businessFooterText()}`
     : `Good news${name ? `, ${name}` : ''}. Your Meals are ready.\nOrder ${order.number}\n\nCollect from ${contact.address.full}. Please bring your Order number.\n\n${businessFooterText()}`;
   return { subject: out ? `Your Meals are on their way (${order.number})` : `Your Meals are ready to collect (${order.number})`, html, text };
 }
