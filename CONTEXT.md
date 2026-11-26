@@ -33,6 +33,9 @@ A Customer withdrawing a paid Order before the Cut-off, for a full refund. Not p
 **Refund**
 Money returned to the Customer's card through Stripe, for a whole Order or only the affected Meals and their Add-ons. Given for a Cancellation, a kitchen cancellation, or a problem the kitchen is responsible for (missing, wrong, damaged, warm or spoiled food, or a missed delivery); a replacement on the next delivery is the alternative.
 
+**Daily limit**
+An optional cap, set by the Master admin, on how many of a Meal (or how many Meals in total) can be ordered for one delivery day. When it's reached, the Meal (or the day) shows as sold out. Blank means no limit.
+
 **Cook list, Packing list, Delivery list**
 The three kitchen lists for a delivery day, produced at the Cut-off: how many of each Meal and Option to cook; what goes in each Order; and where each Order goes, with delivery notes, in route order. Emailed to the kitchen and shown in the Admin Dashboard.
 

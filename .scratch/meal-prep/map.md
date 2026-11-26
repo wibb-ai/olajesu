@@ -20,7 +20,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
   - Guest checkout. Encourage an Account on the confirmation page (one-click, emailed login link, prefilled); never required.
   - Fresh and local delivery (Greater Manchester), not frozen nationwide.
   - Prefer an existing open-source dashboard over building one.
-- **Launch blockers:** verify olajesu.com in Resend (the site can only email the Resend account owner today, and order confirmations are legally required); upgrade Vercel to Pro; register with Manchester City Council; the kitchen completes the Allergen check for every launch Meal.
+- **Launch blockers:** see the Before launch checklist below.
 - **Competitor reference:** 1207 Kitchen (https://1207kitchen.com), a Shopify store with 14 frozen single meals shipped across GB, no packs or subscriptions.
 
 ## Decisions so far
@@ -38,19 +38,26 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [What do the Customer and the kitchen get told, and when?](issues/09-notifications.md): email only, through Resend, from orders@olajesu.com; six Customer emails, starting with the legally required confirmation, and no marketing; the kitchen gets each Order, Cancellation and problem report, plus the Cook, Packing and Delivery lists at the Cut-off; wording fixed, a few settings editable; Kitchen inbox address still to confirm.
 - [How is the site restructured around meal prep?](issues/10-site-restructure.md): the homepage is the A4 shop; catering moves to `/catering` unchanged; one page per Meal; Help, Terms, Privacy, Account and Order pages; per-page search titles, a sitemap and structured data; old `#order` links sent on to catering; the live site switches only when ordering goes live.
 - [Who uses the Admin Dashboard, and with what access?](issues/11-staff-roles.md): three roles, Master admin, Kitchen and Driver, with a rights table; two-step login required for Master admins; simple screens for the day for Kitchen and Driver; individual logins and an Activity log; leavers are switched off, never deleted.
+- [How much can be ordered per delivery day, and what's left before building?](issues/12-capacity-and-loose-ends.md): optional Daily limits per Meal and per delivery day, blank unless set; delivery rules built as editable settings, values chosen before launch; promo codes and Subscriptions ruled out of scope; the remaining open topics became the Before launch checklist.
 
 ## Not yet specified
 
-- **Delivery rules:** which days, which postcodes, fees or free-delivery threshold, order cut-off, delivery slots, whether collection from Mary Street is offered. Must be editable, not hard-coded. User wants to settle this once the system is built. Also: what happens when a delivery fails through the Customer's fault (nobody home, wrong address); when the "out for delivery" email goes; whether to add a delivery-day text message.
-- **Kitchen capacity:** whether to cap Orders per delivery day, or mark Meals as sold out.
-- **Privacy page wording:** set out the data rules from the Accounts ticket, plus cookies and analytics.
-- **Promo codes and discounts beyond Packs.**
-- **Labels and batches:** how use-by dates and labels are produced per Batch (printing from the dashboard?), pending the council's answers on PPDS versus fully prepacked.
-- **Council confirmation:** the five questions in the food-law research, the 2-day shelf life, plus food business registration before launch.
-- **Launch content:** photos of every Meal (single portion plus a wider shot), written descriptions, reheating and storage wording, the founder story, real customer reviews (the A4 design depends on strong photos), the Help page wording, and the business details for the footer.
-- **Phase 2, Subscriptions:** frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing. Likely product: a Chef's Pack the kitchen fills each week (ruled out of phase 1 in the Pack edge-cases ticket).
+Nothing. Every decision needed to start building phase 1 is made. The jobs that remain belong to the user and the kitchen, and are listed below.
+
+## Before launch
+
+Jobs for the user and the kitchen, none of which block building:
+
+- **Accounts and hosting:** verify olajesu.com in Resend (the site can only email the Resend account owner until then, and order confirmations are legally required); upgrade Vercel to Pro; add `PAYLOAD_SECRET` for Production before merging to `main`; reset the Neon database password; turn on database branches for previews.
+- **Council:** register with Manchester City Council (28+ days before trading); ask the five questions in the food-law ticket and confirm the 2-day shelf life; then decide how labels and use-by dates are produced per Batch (PPDS versus fully prepacked).
+- **Kitchen:** complete the Allergen check for every launch Meal; set the delivery rules in the dashboard: days, postcodes, fees, the Cut-off, slots, collection from Mary Street, failed deliveries, and whether to add a delivery-day text message.
+- **Words and photos:** photos of every Meal (single portion plus a wider shot); descriptions; reheating and storage wording; the founder story; real customer reviews; the Help page wording; the footer business details.
+- **Legal pages:** Terms (from the refunds ticket) and Privacy (from the Accounts ticket, plus cookies and analytics). Claude drafts, the user and the kitchen check, and a solicitor's review is recommended.
+- **Other:** give the Kitchen inbox address; check the Google Business Profile links to the site.
 
 ## Out of scope
 
 - Frozen meals shipped nationwide by courier (possible future phase).
 - Build-your-own boxes.
+- Promo codes and discounts beyond Packs: Packs are the phase 1 discount; revisit after launch ([capacity ticket](issues/12-capacity-and-loose-ends.md)).
+- Phase 2, Subscriptions: frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing, and a likely Chef's Pack the kitchen fills each week. Gets its own map ([capacity ticket](issues/12-capacity-and-loose-ends.md)).
