@@ -8,7 +8,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 
 ## Notes
 
-- **Domain:** food e-commerce for a Manchester Nigerian kitchen. Glossary: [CONTEXT.md](../../CONTEXT.md) (Meal, Option, Add-on, Pack, Order, Catering Enquiry, Customer, Account, Admin Dashboard, Subscription).
+- **Domain:** food e-commerce for a Manchester Nigerian kitchen. Glossary: [CONTEXT.md](../../CONTEXT.md) (Meal, Option, Add-on, Pack, Order, Catering Enquiry, Customer, Account, Login link, Marketing consent, Admin Dashboard, Subscription).
 - **Skills:** grilling + domain-modeling for decisions; research for outside facts; prototype for UI questions.
 - **Plan, don't do:** tickets produce decisions. Building happens after the map, one phase at a time, together in sessions. No fixed launch date.
 - **Settled in charting (2026-11-21/22):**
@@ -38,16 +38,11 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 
 - **Delivery rules:** which days, which postcodes, fees or free-delivery threshold, order cut-off, delivery slots, whether collection from Mary Street is offered. Must be editable, not hard-coded. User wants to settle this once the system is built.
 - **Kitchen capacity:** whether to cap Orders per delivery day, or mark Meals as sold out.
-- **Notifications:** what the Customer and the kitchen receive, and when (confirmation, out for delivery, ...). Login link and Account emails are settled in the Accounts ticket.
 - **Privacy page wording:** set out the data rules from the Accounts ticket, plus cookies and analytics.
-- **Refunds and cancellations policy:** likely similar to 1207 Kitchen (perishables exempt, report problems within 24 hours). Needs wording and a process.
-- **Site restructure:** new homepage and navigation, where catering moves, SEO and redirects. The A4 prototype suggests the homepage *is* the shop (hero, Pack offer and menu on one page, with catering linked from the hero).
-- **Unfinished Packs and a Chef's Pack:** what happens to a part-filled Pack at checkout, and whether to offer a kitchen-chosen Pack as a third way to order.
 - **Promo codes and discounts beyond Packs.**
 - **Labels and batches:** how use-by dates and labels are produced per Batch (printing from the dashboard?), pending the council's answers on PPDS versus fully prepacked.
 - **Council confirmation:** the five questions in the food-law research, the 2-day shelf life, plus food business registration before launch.
 - **Launch content:** photos of every Meal (single portion plus a wider shot), written descriptions, reheating and storage wording, the founder story, and real customer reviews (the A4 design depends on strong photos).
-- **Staff access:** who logs into the dashboard and whether roles differ (owner versus kitchen staff).
 - **Phase 2, Subscriptions:** frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing.
 
 ## Out of scope
