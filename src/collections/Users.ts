@@ -47,6 +47,13 @@ export const Users: CollectionConfig = {
       },
     ],
     beforeChange: [
+      ({ data }) => {
+        // A Master admin resets someone's two-step login when they lose their phone.
+        if (data.resetTwoStep) {
+          Object.assign(data, { totpSecret: null, totpPendingSecret: null, totpLastStep: null, totpBackupCodes: null, totpFailures: 0, totpLockedUntil: null, twoStepEnabledAt: null });
+        }
+        return data;
+      },
       async ({ data, originalDoc, operation, req }) => {
         // Never leave the dashboard without an active Master admin.
         const losingMaster =
@@ -71,6 +78,8 @@ export const Users: CollectionConfig = {
       async ({ doc, previousDoc, operation, req }) => {
         if (operation === 'create') {
           await logActivity(req, 'Staff added', `${doc.email} as ${doc.role}`);
+        } else if (previousDoc.twoStepEnabledAt && !doc.twoStepEnabledAt) {
+          await logActivity(req, 'Two-step login reset', doc.email);
         } else if (previousDoc.role !== doc.role || previousDoc.active !== doc.active) {
           await logActivity(req, 'Staff changed', `${doc.email}: role ${doc.role}, ${doc.active === false ? 'switched off' : 'active'}`);
         }
@@ -79,6 +88,28 @@ export const Users: CollectionConfig = {
   },
   fields: [
     { name: 'name', type: 'text' },
+    {
+      name: 'twoStepEnabledAt',
+      type: 'date',
+      label: 'Two-step login set up',
+      admin: { readOnly: true, position: 'sidebar', description: 'Required for Master admins. Blank means it will be set up at the next sign-in.' },
+    },
+    {
+      name: 'resetTwoStep',
+      type: 'checkbox',
+      virtual: true,
+      label: 'Reset two-step login (lost phone)',
+      access: { create: masterAdminField, update: masterAdminField },
+      hooks: { afterRead: [() => false] },
+      admin: { readOnly: false, position: 'sidebar', description: 'They set it up again with a new code at their next sign-in.' },
+    },
+    // Two-step login (src/lib/twoFactor.ts). Never shown or sent anywhere.
+    { name: 'totpSecret', type: 'text', hidden: true },
+    { name: 'totpPendingSecret', type: 'text', hidden: true },
+    { name: 'totpLastStep', type: 'number', hidden: true },
+    { name: 'totpBackupCodes', type: 'json', hidden: true },
+    { name: 'totpFailures', type: 'number', hidden: true },
+    { name: 'totpLockedUntil', type: 'date', hidden: true },
     {
       name: 'role',
       type: 'select',

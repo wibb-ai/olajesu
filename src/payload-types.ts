@@ -399,6 +399,28 @@ export interface AddOn {
 export interface User {
   id: number;
   name?: string | null;
+  /**
+   * Required for Master admins. Blank means it will be set up at the next sign-in.
+   */
+  twoStepEnabledAt?: string | null;
+  /**
+   * They set it up again with a new code at their next sign-in.
+   */
+  resetTwoStep?: boolean | null;
+  totpSecret?: string | null;
+  totpPendingSecret?: string | null;
+  totpLastStep?: number | null;
+  totpBackupCodes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  totpFailures?: number | null;
+  totpLockedUntil?: string | null;
   role: 'master-admin' | 'kitchen';
   /**
    * Untick when someone leaves. They are signed out at once and kept on past records.
@@ -668,6 +690,14 @@ export interface AddOnsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  twoStepEnabledAt?: T;
+  resetTwoStep?: T;
+  totpSecret?: T;
+  totpPendingSecret?: T;
+  totpLastStep?: T;
+  totpBackupCodes?: T;
+  totpFailures?: T;
+  totpLockedUntil?: T;
   role?: T;
   active?: T;
   updatedAt?: T;

@@ -4,6 +4,7 @@ import { getPayload, type Payload } from 'payload';
 
 import type { Role } from '../access/roles';
 import type { User } from '../payload-types';
+import { passedTwoStep } from './twoFactor';
 
 /*
  * The screens for the day (staff-roles ticket): kitchen staff work from simple phone
@@ -16,9 +17,12 @@ export type Staff = User & { role: Role };
 /** The signed-in, switched-on staff member (from Payload's login cookie), or null. */
 export async function currentStaff(payload?: Payload): Promise<Staff | null> {
   const p = payload ?? (await getPayload({ config }));
-  const { user } = await p.auth({ headers: await headers() });
-  const u = user as (User & { collection?: string }) | null;
+  const h = await headers();
+  const { user } = await p.auth({ headers: h });
+  const u = user as (User & { collection?: string; _sid?: string }) | null;
   if (!u || u.collection !== 'users' || u.active === false || !u.role) return null;
+  // Master admins must have entered their two-step code in this session.
+  if (u.role === 'master-admin' && !passedTwoStep(h.get('cookie'), u)) return null;
   return u as Staff;
 }
 

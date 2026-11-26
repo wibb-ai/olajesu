@@ -13,7 +13,19 @@ import { NextRequest, NextResponse } from 'next/server';
 // of the wrong theme.
 const PAYLOAD_THEME_SCRIPT_HASH = "'sha256-eW4XVtkvWTCtmjlnNAPE5rZMcNdfXCcVtmT7b4zs/SM='";
 
+// Dashboard pages that must stay reachable before the two-step code is entered.
+const ADMIN_OPEN = /^\/admin\/(login|logout|forgot|reset|create-first-user|unauthorized)(\/|$)/;
+
 export function proxy(request: NextRequest) {
+  // Signed in to the dashboard but no two-step pass yet: go and enter the code first. The real
+  // check is in the access rules (src/access/roles.ts); this just sends people to the right page.
+  const path = request.nextUrl.pathname;
+  if (path.startsWith('/admin') && !ADMIN_OPEN.test(path) && request.cookies.has('payload-token') && !request.cookies.has('oj_staff_2fa')) {
+    const url = new URL('/staff/two-step', request.url);
+    url.searchParams.set('next', path + request.nextUrl.search);
+    return NextResponse.redirect(url);
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
   const isAdmin = request.nextUrl.pathname.startsWith('/admin');

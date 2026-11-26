@@ -1,4 +1,9 @@
-import type { PayloadRequest } from 'payload';
+import type { Payload, PayloadRequest } from 'payload';
+
+/** The same, from outside a Payload hook (e.g. a route handler), for a known staff member. */
+export async function logActivityAs(payload: Payload, staffId: number, action: string, details: string): Promise<void> {
+  await payload.create({ collection: 'activity-log', data: { action, details, staff: staffId }, overrideAccess: true });
+}
 
 /**
  * Record a sensitive action in the Activity log (CONTEXT.md) under the signed-in staff member.
