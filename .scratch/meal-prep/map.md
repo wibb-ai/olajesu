@@ -33,6 +33,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - [What is on the launch meal-prep menu?](issues/04-meal-prep-menu.md): 8 Meals of one 500 g Portion; protein Options on Jollof and Fried Rice (£6–£15); soups and stews £12–£15; swallows and sides as Add-ons; Packs of 5 (10% off) and 10 (15% off); a Meal can't go on sale without an Allergen check; 2-day shelf life to confirm with the council.
 - [How should ordering look and feel?](issues/05-ordering-flow-prototype.md): one menu page with a sheet for each Meal; Packs as an opt-in mode whose slots fill as Meals are added; a basket mixing Packs and singles; Stripe hosted checkout; one-tap Account on the confirmation page. The look is A4 "Bold landing", a bold landing page and shop in one, phone first (prototype on `prototype/ordering-flow`).
 - [What does a Customer Account do in phase 1?](issues/06-accounts.md): saved details, Order history and reorder; sign-in only by emailed Login link; an Account exists once its email is proven and shows every Order with that email; Orders kept 6 years, profiles until deleted or 3 years unused; Marketing consent is opt-in, and no marketing is sent in phase 1.
+- [What happens to an unfinished Pack, and is there a Chef's Pack?](issues/07-pack-edge-cases.md): a part-filled Pack is either filled or turned into single Meals, by the Customer's choice; any mix and any number of Packs; the server checks availability and today's prices at checkout and shows any change; no Chef's Pack in phase 1.
 
 ## Not yet specified
 
@@ -43,7 +44,7 @@ A build-ready plan for **phase 1: one-time ordering** of fresh, locally delivere
 - **Labels and batches:** how use-by dates and labels are produced per Batch (printing from the dashboard?), pending the council's answers on PPDS versus fully prepacked.
 - **Council confirmation:** the five questions in the food-law research, the 2-day shelf life, plus food business registration before launch.
 - **Launch content:** photos of every Meal (single portion plus a wider shot), written descriptions, reheating and storage wording, the founder story, and real customer reviews (the A4 design depends on strong photos).
-- **Phase 2, Subscriptions:** frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing.
+- **Phase 2, Subscriptions:** frequency, pause/skip/cancel, discount, how Accounts manage them, Stripe Billing. Likely product: a Chef's Pack the kitchen fills each week (ruled out of phase 1 in the Pack edge-cases ticket).
 
 ## Out of scope
 

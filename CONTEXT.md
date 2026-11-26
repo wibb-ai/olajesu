@@ -13,7 +13,7 @@ An extra item added alongside a Meal (e.g. plantain, Moi Moi, extra protein, a s
 One cooking run of a Meal. Its cook date sets the use-by date printed on each pack's label.
 
 **Pack**
-A fixed-size bundle of Meals (5 or 10) where the Customer chooses each Meal. The chosen Meals' prices are reduced by a percentage set in the Admin Dashboard. Add-ons don't count toward a Pack.
+A fixed-size bundle of Meals (5 or 10) where the Customer chooses each Meal. The chosen Meals' prices are reduced by a percentage set in the Admin Dashboard. Add-ons don't count toward a Pack. Any mix of Meals is allowed, including the same Meal several times, and an Order may hold several Packs alongside single Meals. A Pack can only be bought full; a part-filled one is either filled or turned into single Meals at full price, by the Customer's choice.
 
 **Shelf life**
 How many days a Meal stays safe to eat after cooking. With the Batch's cook date it sets the use-by date on the label.
