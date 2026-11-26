@@ -119,6 +119,7 @@ export const Orders: CollectionConfig = {
           label: 'Confirmation emailed',
           admin: { readOnly: true, date: { pickerAppearance: 'dayAndTime' }, description: 'Blank means it hasn’t gone yet; it is retried daily.' },
         },
+        { name: 'updateSavedDetails', type: 'checkbox', hidden: true },
         // Lets the Customer open their own confirmation page; never shown to staff.
         { name: 'accessToken', type: 'text', hidden: true },
       ],

@@ -27,6 +27,8 @@ export type OrderMeal = {
   addOnsPrice: number;
   allergens: string[];
   mayContain: string;
+  /** What the Customer chose, so the Order can be reordered from today's menu. */
+  choice?: Choice;
 };
 
 export type OrderItem = {
@@ -97,6 +99,7 @@ function orderMeal(menu: Menu, choice: Choice, discountPercent: number): OrderMe
     addOnsPrice: pounds(addOnsPence(menu, choice)),
     allergens,
     mayContain,
+    choice,
   };
 }
 
@@ -135,7 +138,7 @@ export async function markPaidFromSession(payload: Payload, session: Stripe.Chec
     data: {
       status: 'paid',
       paidAt: new Date().toISOString(),
-      email: session.customer_details?.email ?? order.email,
+      email: (session.customer_details?.email ?? order.email ?? '').trim().toLowerCase() || null,
       customerName: session.collected_information?.shipping_details?.name ?? session.customer_details?.name ?? order.customerName,
       phone: session.customer_details?.phone ?? order.phone,
       deliveryAddress: formatAddress(session.collected_information, session.customer_details) || order.deliveryAddress,

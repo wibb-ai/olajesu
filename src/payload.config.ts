@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 
 import { ActivityLog } from './collections/ActivityLog';
 import { AddOns } from './collections/AddOns';
+import { Customers } from './collections/Customers';
+import { LoginTokens } from './collections/LoginTokens';
 import { Meals } from './collections/Meals';
 import { Orders } from './collections/Orders';
 import { Users } from './collections/Users';
@@ -29,7 +31,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Orders, Meals, AddOns, Users, ActivityLog],
+  collections: [Orders, Customers, Meals, AddOns, Users, ActivityLog, LoginTokens],
   globals: [PackSettings, KitchenSettings],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

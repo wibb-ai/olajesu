@@ -8,6 +8,7 @@ import { AllergenInfo, Ingredients, MealTags, PhotoBox } from '../../../../compo
 import { ShopShell } from '../../../../components/shop/ShopShell';
 import s from '../../../../components/shop/shop.module.css';
 import { addOnById, fromPrice, gbp } from '../../../../lib/basket';
+import { currentCustomer, summary } from '../../../../lib/account';
 import { getMenu } from '../../../../lib/menu';
 import { shopEnabled } from '../../../../lib/shop';
 
@@ -39,6 +40,7 @@ export default async function MealPage({ params }: Props) {
   const found = await load((await params).slug);
   if (!found) notFound();
   const { menu, meal } = found;
+  const customer = await currentCustomer();
   const addOns = meal.addOnIds.map(id => addOnById(menu, id)).filter(a => !!a);
 
   const jsonLd = {
@@ -50,7 +52,7 @@ export default async function MealPage({ params }: Props) {
   };
 
   return (
-    <ShopShell menu={menu}>
+    <ShopShell menu={menu} account={summary(customer)}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <div className={s.container}>
         <div className={s.mealPage}>

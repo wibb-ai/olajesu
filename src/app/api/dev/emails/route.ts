@@ -1,3 +1,4 @@
+import { inactivityEmail, linkEmail } from '../../../../lib/accountEmails';
 import { confirmationEmail, kitchenOrderEmail, listsEmail, statusEmail } from '../../../../lib/orderEmails';
 import type { OrderItem, OrderMeal } from '../../../../lib/orders';
 import type { Order } from '../../../../payload-types';
@@ -71,5 +72,10 @@ function build() {
     'kitchen-new-order': kitchenOrderEmail(order),
     'kitchen-lists': listsEmail([order, second], '2026-11-28'),
     'kitchen-lists-empty': listsEmail([], '2026-12-05'),
+    'account-sign-in': linkEmail('login', 'sample-token'),
+    'account-save-details': linkEmail('save-details', 'sample-token'),
+    'account-change-email': linkEmail('change-email', 'sample-token'),
+    'account-delete': linkEmail('delete', 'sample-token'),
+    'account-inactive': inactivityEmail('2026-12-26T12:00:00Z'),
   };
 }

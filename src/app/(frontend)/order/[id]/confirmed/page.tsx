@@ -7,11 +7,13 @@ import { connection } from 'next/server';
 import { getPayload } from 'payload';
 
 import { ClearBasket } from '../../../../../components/shop/ClearBasket';
+import { SaveDetails } from '../../../../../components/shop/SaveDetails';
+import { currentCustomer, normaliseEmail, summary } from '../../../../../lib/account';
 import { ShopShell } from '../../../../../components/shop/ShopShell';
 import s from '../../../../../components/shop/shop.module.css';
 import { businessConfig } from '../../../../../config/businessConfig';
 import { getMenu } from '../../../../../lib/menu';
-import { notifyPaid } from '../../../../../lib/orderEmails';
+import { afterPaid } from '../../../../../lib/afterPaid';
 import { markPaidFromSession, type OrderItem } from '../../../../../lib/orders';
 import { getStripe } from '../../../../../lib/stripe';
 
@@ -39,7 +41,7 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
       const session = await stripe.checkout.sessions.retrieve(session_id);
       const result = await markPaidFromSession(payload, session);
       if (result.changed) {
-        await notifyPaid(payload, result.id);
+        await afterPaid(payload, result.id);
         order = await payload.findByID({ collection: 'orders', id: order.id, depth: 0, overrideAccess: true });
       }
     }
@@ -49,9 +51,11 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
   const items = (order.items ?? []) as OrderItem[];
   const delivery = new Date(`${order.deliveryDate.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/London' });
   const menu = await getMenu();
+  const customer = await currentCustomer(payload);
+  const offerAccount = paid && !!order.email && (!customer || customer.email !== normaliseEmail(order.email));
 
   return (
-    <ShopShell menu={menu}>
+    <ShopShell menu={menu} account={summary(customer)}>
       {paid && <ClearBasket />}
       <div className={s.container} style={{ maxWidth: 640, paddingTop: 32 }}>
         {paid ? (
@@ -104,6 +108,8 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
           <span>{paid ? 'Paid' : 'Total'}</span>
           <span>{gbp(order.total)}</span>
         </div>
+
+        {offerAccount && <SaveDetails orderId={order.id} token={t} email={order.email!} />}
 
         {paid && (
           <div className={s.callout} style={{ marginTop: 20 }}>

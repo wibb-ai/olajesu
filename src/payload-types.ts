@@ -68,10 +68,12 @@ export interface Config {
   blocks: {};
   collections: {
     orders: Order;
+    customers: Customer;
     meals: Meal;
     'add-ons': AddOn;
     users: User;
     'activity-log': ActivityLog;
+    'login-tokens': LoginToken;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,10 +82,12 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    customers: CustomersSelect<false> | CustomersSelect<true>;
     meals: MealsSelect<false> | MealsSelect<true>;
     'add-ons': AddOnsSelect<false> | AddOnsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'activity-log': ActivityLogSelect<false> | ActivityLogSelect<true>;
+    'login-tokens': LoginTokensSelect<false> | LoginTokensSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -182,7 +186,50 @@ export interface Order {
    * Blank means it hasn’t gone yet; it is retried daily.
    */
   confirmationSentAt?: string | null;
+  updateSavedDetails?: boolean | null;
   accessToken?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers".
+ */
+export interface Customer {
+  id: number;
+  email: string;
+  name?: string | null;
+  phone?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postcode?: string | null;
+  deliveryNotes?: string | null;
+  /**
+   * Only change this when the Customer asks. The change is recorded in the Activity log.
+   */
+  marketingConsent?: boolean | null;
+  marketingConsentAt?: string | null;
+  marketingConsentNote?: string | null;
+  lastActiveAt?: string | null;
+  /**
+   * Accounts unused for 3 years are deleted, a month after a warning email.
+   */
+  inactivityWarnedAt?: string | null;
+  stripeCustomerId?: string | null;
+  /**
+   * Emails this Account used before; their Orders stay in its history.
+   */
+  previousEmails?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  sessionVersion?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -383,6 +430,23 @@ export interface ActivityLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-tokens".
+ */
+export interface LoginToken {
+  id: number;
+  tokenHash: string;
+  email: string;
+  purpose: 'login' | 'save-details' | 'change-email' | 'delete';
+  orderId?: number | null;
+  customerId?: number | null;
+  newEmail?: string | null;
+  expiresAt: string;
+  usedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -410,6 +474,10 @@ export interface PayloadLockedDocument {
         value: number | Order;
       } | null)
     | ({
+        relationTo: 'customers';
+        value: number | Customer;
+      } | null)
+    | ({
         relationTo: 'meals';
         value: number | Meal;
       } | null)
@@ -424,6 +492,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'activity-log';
         value: number | ActivityLog;
+      } | null)
+    | ({
+        relationTo: 'login-tokens';
+        value: number | LoginToken;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -489,7 +561,32 @@ export interface OrdersSelect<T extends boolean = true> {
   stripePaymentIntentId?: T;
   paidAt?: T;
   confirmationSentAt?: T;
+  updateSavedDetails?: T;
   accessToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customers_select".
+ */
+export interface CustomersSelect<T extends boolean = true> {
+  email?: T;
+  name?: T;
+  phone?: T;
+  addressLine1?: T;
+  addressLine2?: T;
+  city?: T;
+  postcode?: T;
+  deliveryNotes?: T;
+  marketingConsent?: T;
+  marketingConsentAt?: T;
+  marketingConsentNote?: T;
+  lastActiveAt?: T;
+  inactivityWarnedAt?: T;
+  stripeCustomerId?: T;
+  previousEmails?: T;
+  sessionVersion?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -589,6 +686,22 @@ export interface ActivityLogSelect<T extends boolean = true> {
   action?: T;
   details?: T;
   staff?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-tokens_select".
+ */
+export interface LoginTokensSelect<T extends boolean = true> {
+  tokenHash?: T;
+  email?: T;
+  purpose?: T;
+  orderId?: T;
+  customerId?: T;
+  newEmail?: T;
+  expiresAt?: T;
+  usedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

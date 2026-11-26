@@ -939,6 +939,61 @@
   color: var(--muted);
 }
 
+/* Account and forms */
+.panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  margin: 0 0 14px;
+}
+
+.panelTitle {
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.3px;
+  margin: 2px 0 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 12px;
+}
+
+.input {
+  font: inherit;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  color: var(--ink);
+  width: 100%;
+}
+
+.input:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--border);

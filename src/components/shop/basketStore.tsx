@@ -24,6 +24,7 @@ import {
   type Choice,
   type Menu,
 } from '../../lib/basket';
+import type { AccountSummary } from '../../lib/account';
 
 /*
  * The basket lives in the browser (localStorage) so it survives a refresh, and is always
@@ -73,7 +74,7 @@ const getServerSnapshot = () => emptyBasket;
 
 type Sheet = { choice: Choice; qty: number };
 
-function useShopState(menu: Menu) {
+function useShopState(menu: Menu, account: AccountSummary) {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { basket, changes } = useMemo(() => reconcile(menu, stored), [menu, stored]);
   const [notices, setNotices] = useState<string[]>([]);
@@ -81,6 +82,8 @@ function useShopState(menu: Menu) {
   const [basketOpen, setBasketOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  // Signed-in Customers: copy this Order's details to the Account (ticked by default; Accounts ticket).
+  const [updateSavedDetails, setUpdateSavedDetails] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -178,8 +181,17 @@ function useShopState(menu: Menu) {
     removeLine: (key: string) => setBasket({ ...basket, lines: basket.lines.filter(l => l.key !== key) }),
     setLineQty: (key: string, qty: number) =>
       setBasket({ ...basket, lines: qty < 1 ? basket.lines.filter(l => l.key !== key) : basket.lines.map(l => (l.key === key ? { ...l, qty } : l)) }),
+    account,
     marketingConsent,
     setMarketingConsent,
+    updateSavedDetails,
+    setUpdateSavedDetails,
+
+    /** Reorder: add a past Order to the basket. Today's menu and prices apply (reconcile tells the Customer what changed). */
+    addToBasket(extra: Basket) {
+      setBasket({ lines: [...basket.lines, ...extra.lines], packs: [...basket.packs, ...extra.packs], activePack: basket.activePack });
+      setBasketOpen(true);
+    },
     checkingOut,
     checkoutError,
 
@@ -191,7 +203,7 @@ function useShopState(menu: Menu) {
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ basket: { ...basket, activePack: null }, marketingConsent }),
+          body: JSON.stringify({ basket: { ...basket, activePack: null }, marketingConsent, updateSavedDetails: !!account && updateSavedDetails }),
         });
         const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; changes?: string[]; basket?: Basket };
         if (res.ok && data.url) {
@@ -221,8 +233,8 @@ function useShopState(menu: Menu) {
 export type Shop = ReturnType<typeof useShopState>;
 const ShopContext = createContext<Shop | null>(null);
 
-export function ShopProvider({ menu, children }: { menu: Menu; children: ReactNode }) {
-  const shop = useShopState(menu);
+export function ShopProvider({ menu, account, children }: { menu: Menu; account: AccountSummary; children: ReactNode }) {
+  const shop = useShopState(menu, account);
   return <ShopContext.Provider value={shop}>{children}</ShopContext.Provider>;
 }
 

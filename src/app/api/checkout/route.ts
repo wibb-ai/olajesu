@@ -1,12 +1,15 @@
 import config from '@payload-config';
-import { getPayload } from 'payload';
+import { getPayload, type Payload } from 'payload';
+import type Stripe from 'stripe';
 
+import { currentCustomer } from '../../../lib/account';
 import { reconcile, type Basket, type Choice } from '../../../lib/basket';
 import { deliveryDateFor } from '../../../lib/delivery';
 import { getMenu } from '../../../lib/menu';
 import { newAccessToken, newOrderNumber, snapshotBasket } from '../../../lib/orders';
 import { shopEnabled } from '../../../lib/shop';
 import { getStripe } from '../../../lib/stripe';
+import type { Customer } from '../../../payload-types';
 
 const MAX_MEALS = 60;
 
@@ -25,7 +28,7 @@ export async function POST(request: Request) {
   const self = new URL(request.url).origin;
   if (origin && origin !== self) return json({ error: 'Not allowed.' }, 403);
 
-  let body: { basket?: unknown; marketingConsent?: unknown };
+  let body: { basket?: unknown; marketingConsent?: unknown; updateSavedDetails?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -55,6 +58,7 @@ export async function POST(request: Request) {
   if (!stripe) return json({ error: 'Card payments are not set up yet. Please try again soon.' }, 503);
 
   const payload = await getPayload({ config });
+  const customer = await currentCustomer(payload);
   const accessToken = newAccessToken();
   const order = await payload.create({
     collection: 'orders',
@@ -69,12 +73,16 @@ export async function POST(request: Request) {
       savings: snapshot.savings,
       total: snapshot.subtotal,
       marketingConsent: body.marketingConsent === true,
+      // Signed in: the Order's email is the Account's (Accounts ticket).
+      email: customer?.email ?? null,
+      updateSavedDetails: !!customer && body.updateSavedDetails === true,
       accessToken,
     },
   });
 
   const base = process.env.NEXT_PUBLIC_SERVER_URL || self;
   try {
+    const stripeCustomer = customer ? await stripeCustomerFor(payload, stripe, customer) : null;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       currency: 'gbp',
@@ -82,6 +90,8 @@ export async function POST(request: Request) {
       line_items: snapshot.stripeLines,
       shipping_address_collection: { allowed_countries: ['GB'] },
       phone_number_collection: { enabled: true },
+      // Signed in: Stripe's page opens with the saved name, phone and address, and the email fixed.
+      ...(stripeCustomer ? { customer: stripeCustomer, customer_update: { shipping: 'auto' as const, name: 'auto' as const } } : {}),
       metadata: { orderId: String(order.id), orderNumber: order.number },
       payment_intent_data: { metadata: { orderId: String(order.id), orderNumber: order.number } },
       custom_text: {
@@ -100,6 +110,26 @@ export async function POST(request: Request) {
     await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { status: 'expired' } });
     return json({ error: 'We could not start the payment. Please try again.' }, 502);
   }
+}
+
+/** The Account's Stripe Customer, created once and kept up to date with the saved details. */
+async function stripeCustomerFor(payload: Payload, stripe: Stripe, customer: Customer) {
+  const address = customer.addressLine1 && customer.postcode
+    ? { line1: customer.addressLine1, line2: customer.addressLine2 ?? undefined, city: customer.city ?? undefined, postal_code: customer.postcode, country: 'GB' }
+    : undefined;
+  const details = {
+    email: customer.email,
+    name: customer.name ?? undefined,
+    phone: customer.phone ?? undefined,
+    ...(address && customer.name ? { shipping: { name: customer.name, phone: customer.phone ?? undefined, address } } : {}),
+  };
+  if (customer.stripeCustomerId) {
+    await stripe.customers.update(customer.stripeCustomerId, details);
+    return customer.stripeCustomerId;
+  }
+  const created = await stripe.customers.create({ ...details, metadata: { accountId: String(customer.id) } });
+  await payload.update({ collection: 'customers', id: customer.id, overrideAccess: true, data: { stripeCustomerId: created.id } });
+  return created.id;
 }
 
 /** Accepts only a well-formed basket; anything else is rejected rather than guessed at. */

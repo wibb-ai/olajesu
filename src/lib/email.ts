@@ -21,6 +21,11 @@ export async function sendEmail(email: Email): Promise<{ sent: boolean; error?: 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn(`email: RESEND_API_KEY not set; not sending "${email.subject}"`);
+    // Local development only: print the plain-text email so links can be followed, and treat it as sent.
+    if (process.env.NODE_ENV === 'development') {
+      console.info(`email (dev, not sent) to ${String(email.to)}:\n${email.text}`);
+      return { sent: true };
+    }
     return { sent: false, error: 'not configured' };
   }
   const from = process.env.ORDERS_EMAIL_FROM || process.env.EMAIL_FROM || 'OlaJesu <onboarding@resend.dev>';
@@ -71,7 +76,13 @@ export const C = {
 };
 const FONT = `'Plus Jakarta Sans', Helvetica, Arial, sans-serif`;
 
-export const site = () => process.env.NEXT_PUBLIC_SERVER_URL || 'https://olajesu.com';
+/** The site's address for links in emails: the preview's own URL on Vercel previews, so links work there. */
+export const site = () => {
+  if (process.env.NEXT_PUBLIC_SERVER_URL) return process.env.NEXT_PUBLIC_SERVER_URL;
+  if (process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_BRANCH_URL) return `https://${process.env.VERCEL_BRANCH_URL}`;
+  if (process.env.NODE_ENV === 'development') return `http://localhost:${process.env.PORT ?? 3000}`;
+  return 'https://olajesu.com';
+};
 
 /** Small uppercase orange label above a section, as on the site. */
 export const eyebrow = (s: string, color = C.jollof) =>

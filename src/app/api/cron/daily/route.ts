@@ -2,7 +2,9 @@ import config from '@payload-config';
 import { timingSafeEqual } from 'crypto';
 import { getPayload } from 'payload';
 
+import { inactivityEmail } from '../../../../lib/accountEmails';
 import { deliveryDateClosedToday } from '../../../../lib/delivery';
+import { sendEmail } from '../../../../lib/email';
 import { sendCutoffLists, sendOrderConfirmation } from '../../../../lib/orderEmails';
 import { shopEnabled } from '../../../../lib/shop';
 
@@ -43,6 +45,32 @@ export async function GET(request: Request) {
   let retried = 0;
   for (const o of docs) if (await sendOrderConfirmation(payload, o.id)) retried++;
   report.confirmations = { unsent: docs.length, sentNow: retried };
+
+  // Used or expired Login links are only kept a day.
+  await payload.delete({ collection: 'login-tokens', overrideAccess: true, where: { createdAt: { less_than: new Date(Date.now() - 864e5).toISOString() } } });
+
+  // Accounts unused for 3 years: warn, then delete a month later (Accounts ticket).
+  const year = 365.25 * 864e5;
+  const warnBefore = new Date(Date.now() - 3 * year + 30 * 864e5).toISOString();
+  const toWarn = await payload.find({
+    collection: 'customers',
+    overrideAccess: true,
+    pagination: false,
+    where: { and: [{ lastActiveAt: { less_than: warnBefore } }, { inactivityWarnedAt: { exists: false } }] },
+  });
+  for (const c of toWarn.docs) {
+    const sent = await sendEmail({ to: c.email, ...inactivityEmail(new Date(Date.now() + 30 * 864e5).toISOString()) });
+    if (sent.sent) await payload.update({ collection: 'customers', id: c.id, overrideAccess: true, data: { inactivityWarnedAt: new Date().toISOString() } });
+  }
+  const warnedLongAgo = new Date(Date.now() - 30 * 864e5).toISOString();
+  const toDelete = await payload.find({
+    collection: 'customers',
+    overrideAccess: true,
+    pagination: false,
+    where: { and: [{ inactivityWarnedAt: { less_than: warnedLongAgo } }, { lastActiveAt: { less_than: warnBefore } }] },
+  });
+  for (const c of toDelete.docs) await payload.delete({ collection: 'customers', id: c.id, overrideAccess: true });
+  report.accounts = { warned: toWarn.docs.length, deleted: toDelete.docs.length };
 
   payload.logger.info({ msg: 'daily job', ...report });
   return Response.json(report);

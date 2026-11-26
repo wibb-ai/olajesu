@@ -146,6 +146,13 @@ export function BasketSheet() {
         </label>
       )}
 
+      {!empty && shop.account && (
+        <label className={s.subtle} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 10, cursor: 'pointer' }}>
+          <input type="checkbox" checked={shop.updateSavedDetails} onChange={e => shop.setUpdateSavedDetails(e.target.checked)} style={{ marginTop: 3 }} />
+          <span>Update my saved details with the address and phone I use for this Order.</span>
+        </label>
+      )}
+
       {shop.checkoutError && (
         <div className={s.calloutWarn} role="alert">
           {shop.checkoutError}

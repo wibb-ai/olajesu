@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { businessConfig, whatsappLink } from '../../config/businessConfig';
+import type { AccountSummary } from '../../lib/account';
 import { gbp, type Menu } from '../../lib/basket';
 import { BasketSheet } from './BasketSheet';
 import { ShopProvider, useShop } from './basketStore';
@@ -15,9 +16,9 @@ import s from './shop.module.css';
 const YEAR = new Date().getFullYear();
 
 /** Everything around a shop page: countdown, header, footer, basket bar, and the Meal and basket sheets. */
-export function ShopShell({ menu, children }: { menu: Menu; children: ReactNode }) {
+export function ShopShell({ menu, account = null, children }: { menu: Menu; account?: AccountSummary; children: ReactNode }) {
   return (
-    <ShopProvider menu={menu}>
+    <ShopProvider menu={menu} account={account}>
       <div className={`${s.page} ${display.variable}`}>
         <Countdown />
         <Header />
@@ -42,7 +43,10 @@ function Header() {
         </Link>
         <nav className={s.nav} aria-label="Main">
           <Link href="/#menu">Menu</Link>
-          <Link href="/catering">Catering</Link>
+          <Link href="/catering" className={s.navOptional}>
+            Catering
+          </Link>
+          <Link href="/account">{shop.account ? 'Account' : 'Sign in'}</Link>
           <button className={s.basketBtn} onClick={() => shop.setBasketOpen(true)}>
             Basket{shop.priced.mealCount ? ` (${shop.priced.mealCount})` : ''}
           </button>
