@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { fromPrice, gbp, type MenuMeal } from '../../lib/basket';
-import { DELIVERY_PLACEHOLDER } from '../../lib/delivery';
+import { shortCutoffLabel } from '../../lib/delivery';
 import { useShop } from './basketStore';
 import { PackSlots, PhotoBox } from './parts';
 import s from './shop.module.css';
@@ -104,7 +104,7 @@ function Featured() {
               <Price meal={meal} /> · {meal.portionGrams} g
             </div>
           </div>
-          {meal.soldOut ? (
+          {shop.isSoldOut(meal.id) ? (
             <span className={s.soldOut}>Sold out</span>
           ) : (
             <button className={s.smallPill} onClick={() => shop.openMeal(meal.id)}>
@@ -232,15 +232,16 @@ function MenuSection() {
 
 function MealCard({ meal }: { meal: MenuMeal }) {
   const shop = useShop();
+  const soldOut = shop.isSoldOut(meal.id);
   return (
-    <button className={s.mealCard} onClick={() => shop.openMeal(meal.id)} disabled={meal.soldOut} aria-label={meal.soldOut ? `${meal.name}, sold out` : `Choose ${meal.name}`}>
+    <button className={s.mealCard} onClick={() => shop.openMeal(meal.id)} disabled={soldOut} aria-label={soldOut ? `${meal.name}, sold out` : `Choose ${meal.name}`}>
       <PhotoBox meal={meal} height={130} radius={12} />
       <div className={s.mealName}>{meal.name}</div>
       <div className={s.mealMeta}>
         <span className={s.mealPrice}>
           <Price meal={meal} />
         </span>
-        {meal.soldOut ? <span className={s.soldOut}>Sold out</span> : <span className={s.plus}>+</span>}
+        {soldOut ? <span className={s.soldOut}>Sold out</span> : <span className={s.plus}>+</span>}
       </div>
     </button>
   );
@@ -321,17 +322,32 @@ function Reviews() {
   );
 }
 
+const gbpPounds = (n: number) => `£${n.toFixed(2).replace(/\.00$/, '')}`;
+
 function Delivery() {
-  const { deliveryLabel, cutoffLabel, isPlaceholder } = DELIVERY_PLACEHOLDER;
+  const { delivery } = useShop();
+  const days = [...new Set(delivery.dates.map(d => new Date(`${d.date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' })))];
+  const first = delivery.dates[0];
+  const fees = delivery.areas.map(a => a.fee);
+  const free = delivery.areas.map(a => a.freeOver).filter((n): n is number => n !== null);
+  const feeText = !fees.length ? 'Areas to come' : Math.min(...fees) === Math.max(...fees) ? (fees[0] ? gbpPounds(fees[0]) : 'Free') : `From ${gbpPounds(Math.min(...fees))}`;
+  const cards: [string, string, string][] = [
+    [
+      `${days.length ? days.join(' and ') : 'Weekly'} delivery`,
+      `${first ? `Order by ${shortCutoffLabel(first.cutoff)} for the next one. ` : ''}${delivery.deliveryWindow ? `We deliver ${delivery.deliveryWindow}. ` : ''}${
+        delivery.areas.length ? `Delivering to ${delivery.areas.map(a => a.name).join(', ')}.` : 'Delivery areas to come.'
+      }${free.length ? ` Free delivery from ${gbpPounds(Math.min(...free))}.` : ''}`,
+      feeText,
+    ],
+  ];
+  if (delivery.collection.enabled)
+    cards.push(['Collect from the kitchen', `Pick up from ${delivery.collection.address || 'our kitchen'}${delivery.collection.times ? `, ${delivery.collection.times}` : ''}.`, 'Free']);
   return (
     <section className={s.section}>
       <div className={s.eyebrow}>How it gets to you</div>
       <h2 className={`${s.h2} ${s.upper}`}>We bring the kitchen to you</h2>
       <div className={s.deliveryGrid}>
-        {[
-          [`${deliveryLabel} delivery`, `Order by ${cutoffLabel} for delivery across Greater Manchester.`, 'Fee to come'],
-          ['Collect from the kitchen', 'Pick up from Mary Street, if collection is offered.', 'Free'],
-        ].map(([title, text, price]) => (
+        {cards.map(([title, text, price]) => (
           <div key={title} className={s.deliveryCard}>
             <div className={s.deliveryTop}>
               <span>{title}</span>
@@ -343,7 +359,7 @@ function Delivery() {
           </div>
         ))}
       </div>
-      {isPlaceholder && <p className={s.note}>Delivery days, areas and fees are placeholders until the delivery rules are set.</p>}
+      {delivery.draft && <p className={s.note}>Delivery days, areas and fees may still change before launch.</p>}
     </section>
   );
 }

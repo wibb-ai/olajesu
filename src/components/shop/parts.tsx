@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { allergenLabel } from '../../lib/allergens';
 import { type BasketPack, type Menu, type MenuMeal, mealById } from '../../lib/basket';
-import { DELIVERY_PLACEHOLDER, deliveryAfter, nextCutoff } from '../../lib/delivery';
+import { shortCutoffLabel, shortDateLabel } from '../../lib/delivery';
+import { useShop } from './basketStore';
 import s from './shop.module.css';
 
 const SPICE: Record<string, string> = { none: 'Not spicy', mild: 'Mild', medium: 'Medium spice', hot: 'Hot' };
@@ -76,8 +77,9 @@ export function PackSlots({ menu, pack, onRemove }: { menu: Menu; pack: BasketPa
   );
 }
 
-/** Countdown to the next Cut-off. Rendered after mount so server and browser agree. */
+/** Countdown to the chosen day's Cut-off. Rendered after mount so server and browser agree. */
 export function Countdown() {
+  const { day, delivery, fulfilment } = useShop();
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     const tick = () => setNow(new Date());
@@ -88,22 +90,30 @@ export function Countdown() {
       clearInterval(t);
     };
   }, []);
-  const cut = now ? nextCutoff(now) : null;
-  const left = cut && now ? Math.max(0, cut.getTime() - now.getTime()) : 0;
+  if (!day) {
+    return (
+      <div className={s.strip}>
+        <div className={s.stripTitle}>ORDERING IS CLOSED FOR NOW</div>
+        <div className={s.stripSub}>New delivery days open soon</div>
+      </div>
+    );
+  }
+  const left = now ? Math.max(0, new Date(day.cutoff).getTime() - now.getTime()) : 0;
   const parts = [
     [Math.floor(left / 864e5), 'days'],
     [Math.floor(left / 36e5) % 24, 'hrs'],
     [Math.floor(left / 6e4) % 60, 'min'],
     [Math.floor(left / 1e3) % 60, 'sec'],
   ] as const;
-  const arrives = cut ? deliveryAfter(cut) : null;
-  const { deliveryLabel, cutoffLabel, isPlaceholder } = DELIVERY_PLACEHOLDER;
+  const weekday = new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' });
   return (
     <div className={s.strip}>
-      <div className={s.stripTitle}>GET {deliveryLabel.toUpperCase()} DELIVERY</div>
+      <div className={s.stripTitle}>
+        GET {weekday.toUpperCase()} {fulfilment === 'collection' ? 'COLLECTION' : 'DELIVERY'}
+      </div>
       <div className={s.stripSub}>
-        ORDER BY {cutoffLabel.toUpperCase()}
-        {isPlaceholder && ' (placeholder)'}
+        ORDER BY {shortCutoffLabel(day.cutoff).toUpperCase()}
+        {delivery.draft && ' (draft)'}
       </div>
       <div className={s.timer} role="timer" aria-label="Time left to order">
         {parts.map(([n, unit]) => (
@@ -113,7 +123,9 @@ export function Countdown() {
           </div>
         ))}
       </div>
-      {arrives && <div className={s.stripSub} style={{ margin: '8px 0 0' }}>Your Meals arrive {arrives.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</div>}
+      <div className={s.stripSub} style={{ margin: '8px 0 0' }}>
+        Your Meals {fulfilment === 'collection' ? 'are ready' : 'arrive'} {shortDateLabel(day.date)}
+      </div>
     </div>
   );
 }

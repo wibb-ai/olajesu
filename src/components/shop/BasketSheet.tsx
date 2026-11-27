@@ -1,6 +1,7 @@
 'use client';
 
 import { describeChoice, gbp, singlesPrice } from '../../lib/basket';
+import { shortCutoffLabel, shortDateLabel } from '../../lib/delivery';
 import { useShop } from './basketStore';
 import { PackSlots } from './parts';
 import { Sheet } from './Sheet';
@@ -22,9 +23,6 @@ export function BasketSheet() {
       <h2 className={s.sheetTitle} style={{ marginTop: 4 }}>
         Your basket
       </h2>
-      <p className={s.subtle} style={{ margin: '0 0 8px' }}>
-        Delivery day and fee are chosen at checkout.
-      </p>
 
       {notices.length > 0 && (
         <div className={s.calloutWarn} role="status">
@@ -132,10 +130,12 @@ export function BasketSheet() {
           <span>−{gbp(priced.saved)}</span>
         </div>
       )}
+      {!empty && <HowAndWhen />}
+
       {!empty && (
         <div className={s.total}>
-          <span>Total before delivery</span>
-          <span>{gbp(priced.total)}</span>
+          <span>Total</span>
+          <span>{gbp(shop.totalPence)}</span>
         </div>
       )}
 
@@ -161,13 +161,91 @@ export function BasketSheet() {
 
       <div className={s.sheetBar} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
         {priced.incompletePacks.length > 0 && !empty && <p className={s.subtle} style={{ margin: 0 }}>Finish or change your part-filled Pack before checkout.</p>}
-        <button className={s.pillDark} disabled={empty || priced.incompletePacks.length > 0 || shop.checkingOut} onClick={shop.checkout}>
-          {shop.checkingOut ? 'Opening secure payment…' : `Checkout · ${gbp(priced.total)}`}
+        {!empty && shop.howProblem && priced.incompletePacks.length === 0 && <p className={s.subtle} style={{ margin: 0 }}>{shop.howProblem}</p>}
+        <button className={s.pillDark} disabled={empty || priced.incompletePacks.length > 0 || !!shop.howProblem || shop.checkingOut} onClick={shop.checkout}>
+          {shop.checkingOut ? 'Opening secure payment…' : `Checkout · ${gbp(shop.totalPence)}`}
         </button>
         <p className={s.subtle} style={{ margin: 0, fontSize: 11, textAlign: 'center' }}>
           Secure card payment by Stripe. You can cancel for a full refund until the order cut-off.
         </p>
       </div>
     </Sheet>
+  );
+}
+
+/** Delivery or collection, the day, and the postcode that sets the delivery fee. */
+function HowAndWhen() {
+  const shop = useShop();
+  const { delivery, fulfilment, day, area } = shop;
+  const canDeliver = delivery.areas.length > 0;
+  const canCollect = delivery.collection.enabled;
+  return (
+    <div className={s.rowCol} style={{ gap: 10 }}>
+      <b>{fulfilment === 'collection' ? 'Collection' : 'Delivery'}</b>
+      {canDeliver && canCollect && (
+        <div className={s.chips} role="radiogroup" aria-label="Delivery or collection">
+          {(['delivery', 'collection'] as const).map(f => (
+            <button key={f} type="button" role="radio" aria-checked={fulfilment === f} className={fulfilment === f ? s.chipOn : s.chip} onClick={() => shop.setFulfilment(f)}>
+              {f === 'delivery' ? 'Deliver to me' : 'I’ll collect, free'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {delivery.dates.length > 0 && (
+        <div className={s.chips} role="radiogroup" aria-label="Day">
+          {delivery.dates.map(d => (
+            <button
+              key={d.date}
+              type="button"
+              role="radio"
+              aria-checked={day?.date === d.date}
+              disabled={d.full}
+              className={day?.date === d.date ? s.chipOn : s.chip}
+              onClick={() => shop.setDeliveryDate(d.date)}
+            >
+              {shortDateLabel(d.date)}
+              {d.full ? ' · full' : ''}
+            </button>
+          ))}
+        </div>
+      )}
+      {day && (
+        <div className={s.subtle}>
+          Order by {shortCutoffLabel(day.cutoff)}. You can cancel for a full refund until then.
+          {fulfilment === 'delivery' && delivery.deliveryWindow && ` We deliver ${delivery.deliveryWindow}.`}
+        </div>
+      )}
+
+      {fulfilment === 'delivery' ? (
+        <>
+          <label className={s.subtle} htmlFor="basket-postcode">
+            Delivery postcode
+          </label>
+          <input
+            id="basket-postcode"
+            className={s.input}
+            autoComplete="postal-code"
+            inputMode="text"
+            maxLength={10}
+            placeholder="e.g. M14 5AB"
+            value={shop.postcode}
+            onChange={e => shop.setPostcode(e.target.value)}
+          />
+          {area && (
+            <div className={s.row} style={{ padding: 0, border: 0 }}>
+              <span>Delivery to {area.name}</span>
+              <span>{shop.feePence ? gbp(shop.feePence) : 'Free'}</span>
+            </div>
+          )}
+          {area && area.freeOver !== null && shop.feePence > 0 && <div className={s.subtle}>Free delivery from {gbp(Math.round(area.freeOver * 100))}.</div>}
+        </>
+      ) : (
+        <div className={s.subtle}>
+          Collect from {delivery.collection.address || 'our kitchen'}
+          {delivery.collection.times ? `, ${delivery.collection.times}` : ''}.
+        </div>
+      )}
+    </div>
   );
 }

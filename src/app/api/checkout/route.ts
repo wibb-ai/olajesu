@@ -4,7 +4,8 @@ import type Stripe from 'stripe';
 
 import { currentCustomer } from '../../../lib/account';
 import { reconcile, type Basket, type Choice } from '../../../lib/basket';
-import { deliveryDateFor } from '../../../lib/delivery';
+import { areaFor, dateLabel, deliveryFee, normalisePostcode, openDates } from '../../../lib/delivery';
+import { capacityProblem, getDeliveryRules } from '../../../lib/deliverySettings';
 import { getMenu } from '../../../lib/menu';
 import { newAccessToken, newOrderNumber, snapshotBasket } from '../../../lib/orders';
 import { shopEnabled } from '../../../lib/shop';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   const self = new URL(request.url).origin;
   if (origin && origin !== self) return json({ error: 'Not allowed.' }, 403);
 
-  let body: { basket?: unknown; marketingConsent?: unknown; updateSavedDetails?: unknown };
+  let body: { basket?: unknown; marketingConsent?: unknown; updateSavedDetails?: unknown; fulfilment?: unknown; deliveryDate?: unknown; postcode?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -54,10 +55,32 @@ export async function POST(request: Request) {
     return json({ error: 'Finish your Pack, or buy its Meals as single Meals, before checking out.' }, 400);
   }
 
+  // Delivery or collection, the day, and the fee (Delivery and collection settings).
+  const payload = await getPayload({ config });
+  const rules = await getDeliveryRules(payload);
+  const open = openDates(rules);
+  const day = open.find(d => d.date === body.deliveryDate);
+  if (!day) return json({ error: 'That day is no longer available. Please choose another day.', dates: open }, 409);
+  const when = dateLabel(day.date);
+  const fulfilment = body.fulfilment === 'collection' ? 'collection' : 'delivery';
+  let fee = 0;
+  let areaName = '';
+  if (fulfilment === 'collection') {
+    if (!rules.collection.enabled) return json({ error: 'Collection isn’t available at the moment. Please choose delivery.' }, 400);
+  } else {
+    const postcode = typeof body.postcode === 'string' ? normalisePostcode(body.postcode) : null;
+    if (!postcode) return json({ error: 'Enter your full delivery postcode, e.g. M14 5AB.' }, 400);
+    const area = areaFor(rules, postcode);
+    if (!area) return json({ error: `Sorry, we don’t deliver to ${postcode} yet.${rules.collection.enabled ? ' You can collect from our kitchen instead.' : ''}` }, 400);
+    fee = deliveryFee(area, snapshot.subtotal);
+    areaName = area.name;
+  }
+  const full = await capacityProblem(payload, rules, day.date, snapshot.items, when);
+  if (full) return json({ error: full }, 409);
+
   const stripe = getStripe();
   if (!stripe) return json({ error: 'Card payments are not set up yet. Please try again soon.' }, 503);
 
-  const payload = await getPayload({ config });
   const customer = await currentCustomer(payload);
   const accessToken = newAccessToken();
   const order = await payload.create({
@@ -66,12 +89,15 @@ export async function POST(request: Request) {
     data: {
       number: newOrderNumber(),
       status: 'awaiting-payment',
-      deliveryDate: deliveryDateFor(new Date()),
+      deliveryDate: day.date,
+      cutoffAt: day.cutoff,
+      fulfilment,
+      deliveryFee: fee,
       summary: snapshot.summary,
       items: snapshot.items,
       subtotal: snapshot.subtotal,
       savings: snapshot.savings,
-      total: snapshot.subtotal,
+      total: Math.round((snapshot.subtotal + fee) * 100) / 100,
       marketingConsent: body.marketingConsent === true,
       // Signed in: the Order's email is the Account's (Accounts ticket).
       email: customer?.email ?? null,
@@ -88,16 +114,22 @@ export async function POST(request: Request) {
       mode: 'payment',
       currency: 'gbp',
       locale: 'en-GB',
-      line_items: snapshot.stripeLines,
-      shipping_address_collection: { allowed_countries: ['GB'] },
+      line_items: [
+        ...snapshot.stripeLines,
+        ...(fee > 0 ? [{ quantity: 1, price_data: { currency: 'gbp', unit_amount: Math.round(fee * 100), product_data: { name: `Delivery to ${areaName}, ${when}` } } }] : []),
+      ],
+      // Collection needs no address; delivery does.
+      ...(fulfilment === 'delivery' ? { shipping_address_collection: { allowed_countries: ['GB' as const] } } : {}),
       phone_number_collection: { enabled: true },
       // Signed in: Stripe's page opens with the saved name, phone and address, and the email fixed.
-      ...(stripeCustomer ? { customer: stripeCustomer, customer_update: { shipping: 'auto' as const, name: 'auto' as const } } : {}),
+      ...(stripeCustomer
+        ? { customer: stripeCustomer, customer_update: fulfilment === 'delivery' ? { shipping: 'auto' as const, name: 'auto' as const } : { name: 'auto' as const } }
+        : {}),
       metadata: { orderId: String(order.id), orderNumber: order.number },
       payment_intent_data: { metadata: { orderId: String(order.id), orderNumber: order.number } },
       custom_text: {
         submit: {
-          message: 'Fresh food: you can cancel for a full refund until the order cut-off, but not after, as cooking has started.',
+          message: `${fulfilment === 'collection' ? 'Collection' : 'Delivery'} on ${when}. Fresh food: you can cancel for a full refund until the order cut-off, but not after, as cooking has started.`,
         },
       },
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60,

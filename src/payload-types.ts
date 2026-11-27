@@ -99,10 +99,12 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'pack-settings': PackSetting;
+    'delivery-settings': DeliverySetting;
     'kitchen-settings': KitchenSetting;
   };
   globalsSelect: {
     'pack-settings': PackSettingsSelect<false> | PackSettingsSelect<true>;
+    'delivery-settings': DeliverySettingsSelect<false> | DeliverySettingsSelect<true>;
     'kitchen-settings': KitchenSettingsSelect<false> | KitchenSettingsSelect<true>;
   };
   locale: null;
@@ -152,6 +154,15 @@ export interface Order {
     | 'refunded'
     | 'expired';
   deliveryDate: string;
+  fulfilment: 'delivery' | 'collection';
+  /**
+   * Fixed when the Order was placed: the last moment the Customer can cancel.
+   */
+  cutoffAt?: string | null;
+  /**
+   * Set when the address given at payment is outside the delivery areas.
+   */
+  addressCheck?: string | null;
   summary?: string | null;
   /**
    * Ticked off on the kitchen’s packing list.
@@ -159,8 +170,9 @@ export interface Order {
   packedAt?: string | null;
   subtotal: number;
   savings?: number | null;
+  deliveryFee?: number | null;
   /**
-   * Delivery fees come with the delivery rules.
+   * Meals plus the delivery fee.
    */
   total: number;
   /**
@@ -600,10 +612,14 @@ export interface OrdersSelect<T extends boolean = true> {
   number?: T;
   status?: T;
   deliveryDate?: T;
+  fulfilment?: T;
+  cutoffAt?: T;
+  addressCheck?: T;
   summary?: T;
   packedAt?: T;
   subtotal?: T;
   savings?: T;
+  deliveryFee?: T;
   total?: T;
   items?: T;
   refundedTotal?: T;
@@ -844,6 +860,78 @@ export interface PackSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-settings".
+ */
+export interface DeliverySetting {
+  id: number;
+  /**
+   * While ticked, the shop says delivery days, areas and fees may still change. Untick once they are final, before launch.
+   */
+  draft?: boolean | null;
+  /**
+   * Each day you deliver, and its Cut-off: the latest time to order or cancel. After it, cooking starts.
+   */
+  deliveryDays?:
+    | {
+        day: '1' | '2' | '3' | '4' | '5' | '6' | '0';
+        cutoffDaysBefore: number;
+        cutoffHour: '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14' | '15' | '16' | '17' | '18' | '19' | '20';
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Delivery days with no deliveries or collections, e.g. Christmas. Existing Orders for them are not changed.
+   */
+  closedDates?:
+    | {
+        date: string;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * All Meals together, delivered and collected. When reached, that day closes. Blank means no limit. Each Meal can have its own Daily limit too.
+   */
+  dailyMealLimit?: number | null;
+  /**
+   * Where you deliver, by the first part of the postcode. A Customer outside every area can only collect.
+   */
+  areas?:
+    | {
+        name: string;
+        fee: number;
+        /**
+         * Blank for never free.
+         */
+        freeOver?: number | null;
+        /**
+         * The first part of each postcode, separated by commas, e.g. "M1, M3, M4, M14". Letters alone, like "M", mean every postcode starting with them.
+         */
+        postcodes: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Told to Customers, e.g. "between 10am and 4pm".
+   */
+  deliveryWindow?: string | null;
+  /**
+   * What happens when a delivery can’t be made. Shown in the Order confirmation.
+   */
+  failedDelivery?: string | null;
+  collection?: {
+    enabled?: boolean | null;
+    address?: string | null;
+    /**
+     * e.g. "between 12 noon and 6pm".
+     */
+    times?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "kitchen-settings".
  */
 export interface KitchenSetting {
@@ -874,6 +962,50 @@ export interface PackSettingsSelect<T extends boolean = true> {
         size?: T;
         discountPercent?: T;
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "delivery-settings_select".
+ */
+export interface DeliverySettingsSelect<T extends boolean = true> {
+  draft?: T;
+  deliveryDays?:
+    | T
+    | {
+        day?: T;
+        cutoffDaysBefore?: T;
+        cutoffHour?: T;
+        id?: T;
+      };
+  closedDates?:
+    | T
+    | {
+        date?: T;
+        note?: T;
+        id?: T;
+      };
+  dailyMealLimit?: T;
+  areas?:
+    | T
+    | {
+        name?: T;
+        fee?: T;
+        freeOver?: T;
+        postcodes?: T;
+        id?: T;
+      };
+  deliveryWindow?: T;
+  failedDelivery?: T;
+  collection?:
+    | T
+    | {
+        enabled?: T;
+        address?: T;
+        times?: T;
       };
   updatedAt?: T;
   createdAt?: T;

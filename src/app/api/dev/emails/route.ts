@@ -46,11 +46,14 @@ function sample(over: Partial<Order> = {}): Order {
     number: 'OJ-7KQ4MX',
     status: 'paid',
     deliveryDate: '2026-11-28T00:00:00.000Z',
+    cutoffAt: '2026-11-26T20:00:00.000Z',
+    fulfilment: 'delivery',
+    deliveryFee: 3.5,
     summary: '2 × Jollof Rice, chicken + Plantain\n5-Pack, 10% off each Meal:\nEgusi Soup + Pounded Yam × 3\nEfo Riro × 2',
     items,
     subtotal: 97.1,
     savings: 6.9,
-    total: 97.1,
+    total: 100.6,
     customerName: 'Adaeze Okafor',
     email: 'ada@example.com',
     phone: '+44 7700 900123',
@@ -62,14 +65,23 @@ function sample(over: Partial<Order> = {}): Order {
   } as Order;
 }
 
+const DELIVERY = {
+  deliveryWindow: 'between 10am and 4pm',
+  failedDelivery: 'If no one is in, we’ll call you. If we can’t reach you, we take your Meals back and you can collect them the same day.',
+  collection: { enabled: true, address: 'Unit 3, 20-22 Mary Street, Manchester M3 1DZ', times: 'between 12 noon and 6pm' },
+};
+
 function build() {
   const order = sample();
+  const collecting = sample({ fulfilment: 'collection', deliveryFee: 0, total: 97.1, deliveryAddress: null });
   const second = sample({ id: 1043, number: 'OJ-3HV9TC', customerName: 'Tunde Bello', deliveryAddress: 'Tunde Bello\n4 Sample Street\nSalford\nM5 4WT', summary: '3 × Egusi Soup + Pounded Yam', items: [{ kind: 'single', label: 'Egusi Soup + Pounded Yam', qty: 3, discountPercent: 0, meals: [meal('Egusi Soup', ['Fish', 'Crustaceans', 'Celery'], ['Pounded Yam'])], total: 49.5 }], savings: 0, total: 49.5, subtotal: 49.5 });
   return {
-    confirmation: confirmationEmail(order, { kitchenNote: null }),
+    confirmation: confirmationEmail(order, { kitchenNote: null }, DELIVERY),
+    'confirmation-collection': confirmationEmail(collecting, { kitchenNote: null }, DELIVERY),
     'confirmation-with-note': confirmationEmail(order, { kitchenNote: 'We’re closed from 24 to 27 December. Orders for 2 January open on Boxing Day.' }),
     'out-for-delivery': statusEmail({ ...order, status: 'out-for-delivery' }),
-    'ready-to-collect': statusEmail({ ...order, status: 'ready' }),
+    'ready-to-collect': statusEmail({ ...collecting, status: 'ready' }, DELIVERY),
+    'kitchen-new-order-address-check': kitchenOrderEmail({ ...order, addressCheck: 'SK4 1AA is outside the delivery areas. Call the Customer, or refund.' }),
     'kitchen-new-order': kitchenOrderEmail(order),
     'kitchen-lists': listsEmail([order, second], '2026-11-28'),
     'kitchen-lists-empty': listsEmail([], '2026-12-05'),

@@ -7,6 +7,7 @@ import { getPayload } from 'payload';
 import { ShopShell } from '../../../../components/shop/ShopShell';
 import s from '../../../../components/shop/shop.module.css';
 import { peekLinkToken } from '../../../../lib/account';
+import { loadShopDelivery } from '../../../../lib/deliverySettings';
 import { getMenu } from '../../../../lib/menu';
 
 // "same-origin": the token in this page's address is never sent to other sites, but our own
@@ -33,7 +34,7 @@ export default async function Verify({ searchParams }: Props) {
   const row = await peekLinkToken(payload, token);
 
   return (
-    <ShopShell menu={menu}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()}>
       <div className={s.container} style={{ maxWidth: 520, paddingTop: 40, textAlign: 'center' }}>
         {row ? (
           <>

@@ -25,7 +25,13 @@ A named person's dated confirmation that a Meal's ingredients and allergens were
 A one-time purchase of Meals and/or Packs, paid by card at checkout. Distinct from a Catering Enquiry.
 
 **Cut-off**
-The latest time an Order can be placed, or cancelled, for a given delivery day. After it, cooking starts. Its day and time are set by the delivery rules.
+The latest time an Order can be placed, or cancelled, for a given delivery day. After it, cooking starts. Its day and time are set by the delivery rules, and an Order keeps the Cut-off it was placed under even if the rules change later.
+
+**Delivery area**
+A named group of postcode districts the kitchen delivers to, with its own delivery fee and an optional Order total from which delivery is free. A Customer outside every Delivery area can only choose Collection.
+
+**Collection**
+An Order picked up by the Customer from the kitchen on its delivery day, free, instead of being delivered. Offered only when the Master admin switches it on.
 
 **Cancellation**
 A Customer withdrawing a paid Order before the Cut-off, for a full refund. Not possible after the Cut-off; the legal 14-day right doesn't apply to fresh food. A paid Order can't be edited, only cancelled and placed again.

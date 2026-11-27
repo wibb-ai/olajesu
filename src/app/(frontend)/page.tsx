@@ -5,6 +5,7 @@ import CateringPage from '../../components/CateringPage';
 import { ShopHome } from '../../components/shop/ShopHome';
 import { ShopShell } from '../../components/shop/ShopShell';
 import { currentCustomer, summary } from '../../lib/account';
+import { loadShopDelivery } from '../../lib/deliverySettings';
 import { getMenu } from '../../lib/menu';
 import { shopEnabled } from '../../lib/shop';
 
@@ -24,7 +25,7 @@ export default async function Home() {
   if (!shopEnabled()) return <CateringPage />;
   const [menu, customer] = await Promise.all([getMenu(), currentCustomer()]);
   return (
-    <ShopShell menu={menu} account={summary(customer)}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()} account={summary(customer)}>
       <ShopHome />
     </ShopShell>
   );

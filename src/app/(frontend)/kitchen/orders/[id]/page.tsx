@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { KitchenChrome } from '../../../../../components/kitchen/KitchenChrome';
 import { RefundForm } from '../../../../../components/kitchen/RefundForm';
 import s from '../../../../../components/shop/shop.module.css';
-import { cutoffFor } from '../../../../../lib/delivery';
+import { orderCutoff } from '../../../../../lib/orderEmails';
 import { orderUnits, refundable, refundedUnits } from '../../../../../lib/refunds';
 import { longDay, requireStaff } from '../../shared';
 
@@ -35,7 +35,7 @@ export default async function OrderRefunds({ params }: Props) {
         {order.customerName || 'Customer'} <span className={s.accent}>· {gbp(order.total)}</span>
       </h1>
       <p className={s.subtle} style={{ margin: '0 0 14px' }}>
-        {STATUS[order.status] ?? order.status} · for {longDay(order.deliveryDate.slice(0, 10))} · cut-off {cutoffFor(order.deliveryDate).toLocaleString('en-GB', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Europe/London' })}
+        {STATUS[order.status] ?? order.status} · for {longDay(order.deliveryDate.slice(0, 10))} · {order.fulfilment === 'collection' ? 'collecting' : 'delivery'} · cut-off {orderCutoff(order).toLocaleString('en-GB', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Europe/London' })}
         {(order.refundedTotal ?? 0) > 0 && ` · ${gbp(order.refundedTotal ?? 0)} refunded, ${gbp(left)} left`}
       </p>
 

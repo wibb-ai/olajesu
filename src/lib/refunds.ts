@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 
 import type { Order } from '../payload-types';
 import { logActivityAs } from './activity';
-import { cutoffFor } from './delivery';
+import { orderCutoff } from './orderEmails';
 import type { OrderItem } from './orders';
 
 /*
@@ -44,8 +44,8 @@ export const refundable = (order: Pick<Order, 'total' | 'refundedTotal'>) => rou
 const PAID = ['paid', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'partly-refunded'];
 
 /** Can the Customer still cancel this Order themselves? Before the Cut-off, and only if nothing is refunded yet. */
-export function canCustomerCancel(order: Pick<Order, 'status' | 'deliveryDate' | 'refundedTotal'>, now = new Date()) {
-  return (order.status === 'paid' || order.status === 'preparing') && !(order.refundedTotal ?? 0) && now < cutoffFor(order.deliveryDate);
+export function canCustomerCancel(order: Pick<Order, 'status' | 'deliveryDate' | 'cutoffAt' | 'refundedTotal'>, now = new Date()) {
+  return (order.status === 'paid' || order.status === 'preparing') && !(order.refundedTotal ?? 0) && now < orderCutoff(order);
 }
 
 type Kind = 'customer-cancel' | 'kitchen-cancel' | 'refund';

@@ -4,8 +4,8 @@ import { connection } from 'next/server';
 import { getPayload } from 'payload';
 
 import type { Role } from '../../../access/roles';
-import { DELIVERY_PLACEHOLDER } from '../../../lib/delivery';
-import { deliveryDateFor } from '../../../lib/delivery';
+import { openDates } from '../../../lib/delivery';
+import { getDeliveryRules } from '../../../lib/deliverySettings';
 import { currentStaff, londonToday, ordersForDay, upcomingDays } from '../../../lib/staff';
 
 /** Signed-in staff with one of these roles, or off to the kitchen sign-in. */
@@ -30,9 +30,10 @@ export const longDay = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDat
  */
 export async function pickDay(payload: Awaited<ReturnType<typeof getPayload>>, asked: string | undefined) {
   const days = await upcomingDays(payload);
-  const fallback = days[0] ?? deliveryDateFor(new Date());
+  const rules = await getDeliveryRules(payload);
+  const fallback = days[0] ?? openDates(rules, new Date(), 1)[0]?.date ?? londonToday();
   const date = asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) ? asked : fallback;
   const all = [...new Set([...days, date])].sort();
   const orders = await ordersForDay(payload, date);
-  return { date, orders, days: all.map(d => ({ value: d, label: dayLabel(d) })), placeholder: DELIVERY_PLACEHOLDER.isPlaceholder };
+  return { date, orders, days: all.map(d => ({ value: d, label: dayLabel(d) })), placeholder: rules.draft };
 }

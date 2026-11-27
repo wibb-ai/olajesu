@@ -10,6 +10,7 @@ import { LoginTokens } from './collections/LoginTokens';
 import { Meals } from './collections/Meals';
 import { Orders } from './collections/Orders';
 import { Users } from './collections/Users';
+import { DeliverySettings } from './globals/DeliverySettings';
 import { KitchenSettings } from './globals/KitchenSettings';
 import { PackSettings } from './globals/PackSettings';
 
@@ -33,7 +34,7 @@ export default buildConfig({
     },
   },
   collections: [Orders, Customers, Meals, AddOns, Users, ActivityLog, LoginTokens],
-  globals: [PackSettings, KitchenSettings],
+  globals: [PackSettings, DeliverySettings, KitchenSettings],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

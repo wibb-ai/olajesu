@@ -41,12 +41,12 @@ export function PackToggle({ orderId, packed }: { orderId: number; packed: boole
   );
 }
 
-/** "Out for delivery" (emails the Customer) and "Delivered". */
-export function DeliveryButtons({ orderId, status }: { orderId: number; status: string }) {
+/** "Out for delivery" or "Ready to collect" (each emails the Customer), then "Delivered" or "Collected". */
+export function DeliveryButtons({ orderId, status, collection = false }: { orderId: number; status: string; collection?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const act = async (action: 'out-for-delivery' | 'delivered') => {
+  const act = async (action: 'out-for-delivery' | 'ready' | 'delivered') => {
     setBusy(true);
     setError(null);
     const err = await post(`/api/kitchen/orders/${orderId}`, { action });
@@ -54,16 +54,17 @@ export function DeliveryButtons({ orderId, status }: { orderId: number; status: 
     if (err) setError(err);
     else router.refresh();
   };
-  if (status === 'delivered') return <span className={s.tag} style={{ background: '#e3efe7', color: 'var(--green)', fontSize: 13 }}>✓ Delivered</span>;
+  const first = collection ? 'ready' : 'out-for-delivery';
+  if (status === 'delivered') return <span className={s.tag} style={{ background: '#e3efe7', color: 'var(--green)', fontSize: 13 }}>✓ {collection ? 'Collected' : 'Delivered'}</span>;
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      {status !== 'out-for-delivery' && (
-        <button className={s.smallPillLight} disabled={busy} onClick={() => act('out-for-delivery')} style={{ fontSize: 12, padding: '12px 14px' }}>
-          Out for delivery
+      {status !== first && (
+        <button className={s.smallPillLight} disabled={busy} onClick={() => act(first)} style={{ fontSize: 12, padding: '12px 14px' }}>
+          {collection ? 'Ready to collect' : 'Out for delivery'}
         </button>
       )}
       <button className={s.smallPill} disabled={busy} onClick={() => act('delivered')} style={{ fontSize: 12, padding: '12px 16px' }}>
-        Delivered
+        {collection ? 'Collected' : 'Delivered'}
       </button>
       {error && <div className={s.calloutWarn} style={{ width: '100%' }}>{error}</div>}
     </div>

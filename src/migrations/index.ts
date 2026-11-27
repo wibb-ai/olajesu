@@ -7,6 +7,7 @@ import * as migration_20261126_203700_kitchen_screens from './20261126_203700_ki
 import * as migration_20261126_204959_remove_driver_role from './20261126_204959_remove_driver_role';
 import * as migration_20261126_205906_two_step_login from './20261126_205906_two_step_login';
 import * as migration_20261126_214052_refunds from './20261126_214052_refunds';
+import * as migration_20261127_005924_delivery_settings from './20261127_005924_delivery_settings';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20261126_214052_refunds.up,
     down: migration_20261126_214052_refunds.down,
-    name: '20261126_214052_refunds'
+    name: '20261126_214052_refunds',
+  },
+  {
+    up: migration_20261127_005924_delivery_settings.up,
+    down: migration_20261127_005924_delivery_settings.down,
+    name: '20261127_005924_delivery_settings'
   },
 ];

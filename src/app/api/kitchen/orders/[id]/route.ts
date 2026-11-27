@@ -4,7 +4,7 @@ import { getPayload } from 'payload';
 import { fromThisSite, json } from '../../../../../lib/http';
 import { canSeeDeliveryDetails, currentStaff, KITCHEN_STATUSES } from '../../../../../lib/staff';
 
-type Action = 'packed' | 'unpacked' | 'out-for-delivery' | 'delivered';
+type Action = 'packed' | 'unpacked' | 'out-for-delivery' | 'ready' | 'delivered';
 
 /**
  * The buttons on the screens for the day. Orders are otherwise changed only by the Master admin;
@@ -29,8 +29,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return json({ ok: true });
 
     case 'out-for-delivery':
+    case 'ready':
     case 'delivered':
       if (!canSeeDeliveryDetails(staff, order.deliveryDate)) return json({ error: 'Deliveries can only be marked on the delivery day.' }, 403);
+      // "Ready to collect" is for collections, "Out for delivery" for deliveries.
+      if ((body.action === 'ready') !== (order.fulfilment === 'collection') && body.action !== 'delivered') return json({ error: 'That doesn’t apply to this Order.' }, 400);
       if (order.status === body.action) return json({ ok: true });
       await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { status: body.action } });
       return json({ ok: true });

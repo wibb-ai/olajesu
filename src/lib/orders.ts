@@ -3,6 +3,8 @@ import type { Payload } from 'payload';
 import type Stripe from 'stripe';
 
 import { allergenLabel } from './allergens';
+import { areaFor } from './delivery';
+import { getDeliveryRules } from './deliverySettings';
 import { tally } from './text';
 import { addOnById, addOnsPence, describeChoice, mealById, mealPence, packDiscountPence, priceBasket, type Basket, type Choice, type Menu } from './basket';
 
@@ -131,17 +133,25 @@ export async function markPaidFromSession(payload: Payload, session: Stripe.Chec
     payload.logger.error(`Order ${order.number}: Stripe charged £${paid} but the Order total is £${order.total}`);
   }
 
+  // Delivery: the postcode was checked before payment, but Stripe's page lets the Customer type any
+  // address. One outside every delivery area is flagged for the kitchen rather than refused.
+  const collecting = order.fulfilment === 'collection';
+  const address = collecting ? '' : formatAddress(session.collected_information, session.customer_details);
+  const postcode = session.collected_information?.shipping_details?.address?.postal_code ?? '';
+  const outside = !collecting && !areaFor(await getDeliveryRules(payload), postcode);
+
   await payload.update({
     collection: 'orders',
     id: order.id,
     overrideAccess: true,
     data: {
       status: 'paid',
+      addressCheck: outside ? `${postcode || 'No postcode'} is outside the delivery areas. Call the Customer, or refund.` : null,
       paidAt: new Date().toISOString(),
       email: (session.customer_details?.email ?? order.email ?? '').trim().toLowerCase() || null,
       customerName: session.collected_information?.shipping_details?.name ?? session.customer_details?.name ?? order.customerName,
       phone: session.customer_details?.phone ?? order.phone,
-      deliveryAddress: formatAddress(session.collected_information, session.customer_details) || order.deliveryAddress,
+      deliveryAddress: collecting ? null : address || order.deliveryAddress,
       stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent?.id ?? null),
     },
   });

@@ -10,7 +10,8 @@ import { CancelOrder } from '../../../../../components/shop/CancelOrder';
 import { ShopShell } from '../../../../../components/shop/ShopShell';
 import s from '../../../../../components/shop/shop.module.css';
 import { currentCustomer, summary } from '../../../../../lib/account';
-import { cutoffFor } from '../../../../../lib/delivery';
+import { orderCutoff } from '../../../../../lib/orderEmails';
+import { loadShopDelivery } from '../../../../../lib/deliverySettings';
 import { getMenu } from '../../../../../lib/menu';
 import { longDate } from '../../../../../lib/orderEmails';
 import { canCustomerCancel } from '../../../../../lib/refunds';
@@ -32,11 +33,11 @@ export default async function CancelPage({ params, searchParams }: Props) {
   if (!order?.accessToken || order.accessToken.length !== t.length || !timingSafeEqual(Buffer.from(order.accessToken), Buffer.from(t))) notFound();
 
   const [menu, customer] = await Promise.all([getMenu(), currentCustomer(payload)]);
-  const cutoff = cutoffFor(order.deliveryDate);
+  const cutoff = orderCutoff(order);
   const can = canCustomerCancel(order);
 
   return (
-    <ShopShell menu={menu} account={summary(customer)}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()} account={summary(customer)}>
       <div className={s.container} style={{ maxWidth: 600, paddingTop: 32 }}>
         <div className={s.eyebrow}>Order {order.number}</div>
         {order.status === 'cancelled' ? (

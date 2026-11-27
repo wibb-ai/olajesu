@@ -3,7 +3,9 @@ import { timingSafeEqual } from 'crypto';
 import { getPayload } from 'payload';
 
 import { inactivityEmail } from '../../../../lib/accountEmails';
-import { deliveryDateClosedToday } from '../../../../lib/delivery';
+import { logActivityAs } from '../../../../lib/activity';
+import { cutoffsBetween } from '../../../../lib/delivery';
+import { getDeliveryRules } from '../../../../lib/deliverySettings';
 import { sendEmail } from '../../../../lib/email';
 import { sendCutoffLists, sendOrderConfirmation } from '../../../../lib/orderEmails';
 import { shopEnabled } from '../../../../lib/shop';
@@ -14,6 +16,8 @@ import { shopEnabled } from '../../../../lib/shop';
  * - Every day, retries any paid Order's confirmation email that failed to send.
  * Vercel sends "Authorization: Bearer $CRON_SECRET"; anything else is refused.
  */
+const LISTS_SENT = 'Kitchen lists sent';
+
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get('authorization') ?? '';
@@ -28,10 +32,17 @@ export async function GET(request: Request) {
   const payload = await getPayload({ config });
   const report: Record<string, unknown> = {};
 
-  const closed = deliveryDateClosedToday(new Date());
-  if (closed) {
-    const sent = await sendCutoffLists(payload, closed);
-    report.lists = { deliveryDate: closed, sent: sent.sent, error: sent.error };
+  // Kitchen lists for each delivery date whose Cut-off has passed in the last 3 days, once each:
+  // a send is recorded in the Activity log, so a late or missed run catches up without repeats.
+  const now = new Date();
+  const due = cutoffsBetween(await getDeliveryRules(payload), new Date(now.getTime() - 3 * 864e5), now);
+  report.lists = [];
+  for (const date of due) {
+    const already = await payload.count({ collection: 'activity-log', overrideAccess: true, where: { and: [{ action: { equals: LISTS_SENT } }, { details: { equals: date } }] } });
+    if (already.totalDocs) continue;
+    const sent = await sendCutoffLists(payload, date);
+    if (sent.sent) await logActivityAs(payload, null, LISTS_SENT, date);
+    (report.lists as unknown[]).push({ deliveryDate: date, sent: sent.sent, error: sent.error });
   }
 
   const since = new Date(Date.now() - 3 * 864e5).toISOString();

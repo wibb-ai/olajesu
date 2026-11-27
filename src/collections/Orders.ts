@@ -68,6 +68,30 @@ export const Orders: CollectionConfig = {
       index: true,
       admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayOnly', displayFormat: 'EEE d MMM yyyy' } },
     },
+    {
+      name: 'fulfilment',
+      type: 'select',
+      label: 'Delivery or collection',
+      required: true,
+      defaultValue: 'delivery',
+      options: [
+        { label: 'Delivery', value: 'delivery' },
+        { label: 'Collection', value: 'collection' },
+      ],
+      admin: { position: 'sidebar', readOnly: true },
+    },
+    {
+      name: 'cutoffAt',
+      type: 'date',
+      label: 'Cut-off',
+      admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' }, description: 'Fixed when the Order was placed: the last moment the Customer can cancel.' },
+    },
+    {
+      name: 'addressCheck',
+      type: 'text',
+      label: 'Address to check',
+      admin: { readOnly: true, description: 'Set when the address given at payment is outside the delivery areas.' },
+    },
     { name: 'summary', type: 'textarea', label: 'What was ordered', admin: { readOnly: true } },
     {
       name: 'packedAt',
@@ -78,8 +102,9 @@ export const Orders: CollectionConfig = {
     {
       type: 'row',
       fields: [
-        { name: 'subtotal', type: 'number', label: 'Total (£)', admin: { readOnly: true }, required: true },
+        { name: 'subtotal', type: 'number', label: 'Meals (£)', admin: { readOnly: true }, required: true },
         { name: 'savings', type: 'number', label: 'Pack savings (£)', admin: { readOnly: true } },
+        { name: 'deliveryFee', type: 'number', label: 'Delivery fee (£)', defaultValue: 0, admin: { readOnly: true } },
       ],
     },
     {
@@ -87,7 +112,7 @@ export const Orders: CollectionConfig = {
       type: 'number',
       label: 'Paid (£)',
       required: true,
-      admin: { readOnly: true, description: 'Delivery fees come with the delivery rules.' },
+      admin: { readOnly: true, description: 'Meals plus the delivery fee.' },
     },
     {
       name: 'items',

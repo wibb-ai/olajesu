@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { businessConfig, whatsappLink } from '../../config/businessConfig';
 import type { AccountSummary } from '../../lib/account';
+import type { ShopDelivery } from '../../lib/deliverySettings';
 import { gbp, type Menu } from '../../lib/basket';
 import { BasketSheet } from './BasketSheet';
 import { ShopProvider, useShop } from './basketStore';
@@ -16,9 +17,9 @@ import s from './shop.module.css';
 const YEAR = new Date().getFullYear();
 
 /** Everything around a shop page: countdown, header, footer, basket bar, and the Meal and basket sheets. */
-export function ShopShell({ menu, account = null, children }: { menu: Menu; account?: AccountSummary; children: ReactNode }) {
+export function ShopShell({ menu, account = null, delivery, children }: { menu: Menu; account?: AccountSummary; delivery: ShopDelivery; children: ReactNode }) {
   return (
-    <ShopProvider menu={menu} account={account}>
+    <ShopProvider menu={menu} account={account} delivery={delivery}>
       <div className={`${s.page} ${display.variable}`}>
         <Countdown />
         <Header />

@@ -8,6 +8,7 @@ import { AccountView, SignIn, type AccountOrder } from '../../../components/shop
 import { ShopShell } from '../../../components/shop/ShopShell';
 import s from '../../../components/shop/shop.module.css';
 import { currentCustomer, ordersFor, summary } from '../../../lib/account';
+import { loadShopDelivery } from '../../../lib/deliverySettings';
 import { getMenu } from '../../../lib/menu';
 import { longDate } from '../../../lib/orderEmails';
 import type { OrderItem } from '../../../lib/orders';
@@ -50,7 +51,7 @@ export default async function AccountPage({ searchParams }: Props) {
 
   if (!customer) {
     return (
-      <ShopShell menu={menu}>
+      <ShopShell menu={menu} delivery={await loadShopDelivery()}>
         <div className={s.container} style={{ maxWidth: 560, paddingTop: 36 }}>
           <SignIn flash={flash} />
         </div>
@@ -71,7 +72,7 @@ export default async function AccountPage({ searchParams }: Props) {
   }));
 
   return (
-    <ShopShell menu={menu} account={summary(customer)}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()} account={summary(customer)}>
       <div className={s.container} style={{ maxWidth: 720, paddingTop: 28 }}>
         <AccountView
           flash={flash}

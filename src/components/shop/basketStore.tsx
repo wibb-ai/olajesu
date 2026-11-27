@@ -25,6 +25,8 @@ import {
   type Menu,
 } from '../../lib/basket';
 import type { AccountSummary } from '../../lib/account';
+import { areaFor, deliveryFee, normalisePostcode, type Fulfilment } from '../../lib/delivery';
+import type { ShopDelivery } from '../../lib/deliverySettings';
 
 /*
  * The basket lives in the browser (localStorage) so it survives a refresh, and is always
@@ -74,7 +76,7 @@ const getServerSnapshot = () => emptyBasket;
 
 type Sheet = { choice: Choice; qty: number };
 
-function useShopState(menu: Menu, account: AccountSummary) {
+function useShopState(menu: Menu, account: AccountSummary, delivery: ShopDelivery) {
   const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { basket, changes } = useMemo(() => reconcile(menu, stored), [menu, stored]);
   const [notices, setNotices] = useState<string[]>([]);
@@ -86,6 +88,10 @@ function useShopState(menu: Menu, account: AccountSummary) {
   const [updateSavedDetails, setUpdateSavedDetails] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  // How and when: delivery or collection, the day, and (for delivery) the postcode for the fee.
+  const [fulfilment, setFulfilment] = useState<Fulfilment>(delivery.areas.length || !delivery.collection.enabled ? 'delivery' : 'collection');
+  const [chosenDate, setDeliveryDate] = useState<string | null>(null);
+  const [postcode, setPostcode] = useState(account?.postcode ?? '');
 
   // Write the up-to-date basket back once, and tell the Customer what changed.
   useEffect(() => {
@@ -101,6 +107,24 @@ function useShopState(menu: Menu, account: AccountSummary) {
   }, [toast]);
 
   const priced = useMemo(() => priceBasket(menu, basket), [menu, basket]);
+
+  // The day: the Customer's choice while it's still open, else the soonest day not fully booked.
+  const day = delivery.dates.find(d => d.date === chosenDate && !d.full) ?? delivery.dates.find(d => !d.full) ?? null;
+  const validPostcode = normalisePostcode(postcode);
+  const area = fulfilment === 'delivery' && validPostcode ? areaFor(delivery, validPostcode) : null;
+  const feePence = fulfilment === 'delivery' && area ? Math.round(deliveryFee(area, priced.total / 100) * 100) : 0;
+  /** Sold out by hand, or for the chosen day by its Daily limit. */
+  const isSoldOut = (mealId: number) => !!mealById(menu, mealId)?.soldOut || !!day?.soldOut.includes(mealId);
+  const soldOutInBasket = [...new Set([...basket.lines.map(l => l.choice.mealId), ...basket.packs.flatMap(p => p.items.map(i => i.mealId))])].filter(isSoldOut);
+  const howProblem = !day
+    ? 'There are no delivery days open right now.'
+    : fulfilment === 'delivery' && !validPostcode
+      ? 'Enter your delivery postcode.'
+      : fulfilment === 'delivery' && !area
+        ? `Sorry, we don’t deliver to ${validPostcode} yet.${delivery.collection.enabled ? ' You can collect from our kitchen instead.' : ''}`
+        : soldOutInBasket.length
+          ? `${soldOutInBasket.map(id => mealById(menu, id)?.name).join(', ')} ${soldOutInBasket.length === 1 ? 'is' : 'are'} sold out for that day. Remove ${soldOutInBasket.length === 1 ? 'it' : 'them'}, or choose another day.`
+          : null;
   const activePack = basket.packs.find(p => p.key === basket.activePack) ?? null;
   const activeOffer = activePack ? packOffer(menu, activePack.size) : undefined;
 
@@ -132,7 +156,7 @@ function useShopState(menu: Menu, account: AccountSummary) {
 
     openMeal(mealId: number) {
       const meal = mealById(menu, mealId);
-      if (!meal || meal.soldOut) return;
+      if (!meal || isSoldOut(mealId)) return;
       setSheet({ choice: defaultChoice(meal), qty: 1 });
     },
     closeMeal: () => setSheet(null),
@@ -195,6 +219,19 @@ function useShopState(menu: Menu, account: AccountSummary) {
     checkingOut,
     checkoutError,
 
+    delivery,
+    fulfilment,
+    setFulfilment,
+    day,
+    setDeliveryDate,
+    postcode,
+    setPostcode,
+    area,
+    feePence,
+    totalPence: priced.total + feePence,
+    isSoldOut,
+    howProblem,
+
     /** Hands the basket to the server, which re-checks and prices it, then sends the Customer to Stripe. */
     async checkout() {
       setCheckingOut(true);
@@ -203,7 +240,14 @@ function useShopState(menu: Menu, account: AccountSummary) {
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ basket: { ...basket, activePack: null }, marketingConsent, updateSavedDetails: !!account && updateSavedDetails }),
+          body: JSON.stringify({
+            basket: { ...basket, activePack: null },
+            marketingConsent,
+            updateSavedDetails: !!account && updateSavedDetails,
+            fulfilment,
+            deliveryDate: day?.date ?? null,
+            postcode: fulfilment === 'delivery' ? postcode : null,
+          }),
         });
         const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; changes?: string[]; basket?: Basket };
         if (res.ok && data.url) {
@@ -233,8 +277,8 @@ function useShopState(menu: Menu, account: AccountSummary) {
 export type Shop = ReturnType<typeof useShopState>;
 const ShopContext = createContext<Shop | null>(null);
 
-export function ShopProvider({ menu, account, children }: { menu: Menu; account: AccountSummary; children: ReactNode }) {
-  const shop = useShopState(menu, account);
+export function ShopProvider({ menu, account, delivery, children }: { menu: Menu; account: AccountSummary; delivery: ShopDelivery; children: ReactNode }) {
+  const shop = useShopState(menu, account, delivery);
   return <ShopContext.Provider value={shop}>{children}</ShopContext.Provider>;
 }
 

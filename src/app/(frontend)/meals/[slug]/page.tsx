@@ -9,6 +9,7 @@ import { ShopShell } from '../../../../components/shop/ShopShell';
 import s from '../../../../components/shop/shop.module.css';
 import { addOnById, fromPrice, gbp } from '../../../../lib/basket';
 import { currentCustomer, summary } from '../../../../lib/account';
+import { loadShopDelivery } from '../../../../lib/deliverySettings';
 import { getMenu } from '../../../../lib/menu';
 import { shopEnabled } from '../../../../lib/shop';
 
@@ -52,7 +53,7 @@ export default async function MealPage({ params }: Props) {
   };
 
   return (
-    <ShopShell menu={menu} account={summary(customer)}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()} account={summary(customer)}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <div className={s.container}>
         <div className={s.mealPage}>

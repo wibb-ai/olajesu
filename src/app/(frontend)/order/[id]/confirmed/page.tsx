@@ -12,6 +12,7 @@ import { currentCustomer, normaliseEmail, summary } from '../../../../../lib/acc
 import { ShopShell } from '../../../../../components/shop/ShopShell';
 import s from '../../../../../components/shop/shop.module.css';
 import { businessConfig } from '../../../../../config/businessConfig';
+import { loadShopDelivery } from '../../../../../lib/deliverySettings';
 import { getMenu } from '../../../../../lib/menu';
 import { afterPaid } from '../../../../../lib/afterPaid';
 import { markPaidFromSession, type OrderItem } from '../../../../../lib/orders';
@@ -56,7 +57,7 @@ export default async function OrderConfirmed({ params, searchParams }: Props) {
   const offerAccount = paid && !!order.email && (!customer || customer.email !== normaliseEmail(order.email));
 
   return (
-    <ShopShell menu={menu} account={summary(customer)}>
+    <ShopShell menu={menu} delivery={await loadShopDelivery()} account={summary(customer)}>
       {paid && <ClearBasket />}
       <div className={s.container} style={{ maxWidth: 640, paddingTop: 32 }}>
         {paid ? (

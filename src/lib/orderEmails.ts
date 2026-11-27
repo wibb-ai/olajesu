@@ -2,7 +2,8 @@ import type { Payload, PayloadRequest } from 'payload';
 
 import { businessConfig } from '../config/businessConfig';
 import type { Order } from '../payload-types';
-import { DELIVERY_PLACEHOLDER } from './delivery';
+import { cutoffFor, cutoffLabel, DEFAULT_RULES, shortCutoffLabel, type DeliveryRules } from './delivery';
+import { getDeliveryRules } from './deliverySettings';
 import { C, card, darkPanel, emailLayout, escapeHtml as e, moneyRow, muted, para, sendEmail, site, table } from './email';
 import type { OrderItem, OrderMeal } from './orders';
 import { tally } from './text';
@@ -21,6 +22,9 @@ const weekday = (iso: string) => new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLoc
 const firstName = (o: Order) => (o.customerName ?? '').trim().split(/\s+/)[0] || '';
 
 export type Settings = { kitchenInbox?: string | null; emailEachOrder?: boolean | null; kitchenNote?: string | null };
+/** The parts of the delivery rules the Customer is told. */
+export type DeliveryText = Pick<DeliveryRules, 'deliveryWindow' | 'failedDelivery' | 'collection'>;
+const NO_DELIVERY_TEXT: DeliveryText = { deliveryWindow: '', failedDelivery: '', collection: { enabled: false, address: '', times: '' } };
 
 /** Pass `req` from inside a hook, so the read joins that change's database transaction. */
 async function settings(payload: Payload, req?: PayloadRequest): Promise<Settings> {
@@ -50,9 +54,16 @@ const orderLink = (o: Order) => (o.accessToken ? `${site()}/order/${o.id}/confir
 export const cancelLink = (o: Order) => (o.accessToken ? `${site()}/order/${o.id}/cancel?t=${o.accessToken}` : site());
 const short = (day: string) => day.slice(0, 3);
 
-const cancelNotice = () =>
-  `Changed your plans? You can cancel for a full refund until the order cut-off (${DELIVERY_PLACEHOLDER.cutoffLabel} before delivery), using the link in this email. After the cut-off we've started cooking, so we can't cancel: fresh food isn't covered by the legal 14-day right to cancel.`;
-const problemNotice = `Something not right? Reply within 24 hours of delivery, with a photo if you can, and we'll put it right with a refund or a replacement.`;
+/** The Order's Cut-off: fixed when it was placed (older Orders: the rule they were placed under). */
+export const orderCutoff = (o: Pick<Order, 'cutoffAt' | 'deliveryDate'>) => (o.cutoffAt ? new Date(o.cutoffAt) : cutoffFor(DEFAULT_RULES, o.deliveryDate));
+const collecting = (o: Order) => o.fulfilment === 'collection';
+/** Where to collect from: the settings' address, or the kitchen's. */
+const collectAt = (d: DeliveryText) => d.collection.address.trim() || contact.address.full;
+
+const cancelNotice = (o: Order) =>
+  `Changed your plans? You can cancel for a full refund until the order cut-off, ${cutoffLabel(orderCutoff(o))}, using the link in this email. After the cut-off we've started cooking, so we can't cancel: fresh food isn't covered by the legal 14-day right to cancel.`;
+const problemNotice = (o: Order) =>
+  `Something not right? Reply within 24 hours of ${collecting(o) ? 'collection' : 'delivery'}, with a photo if you can, and we'll put it right with a refund or a replacement.`;
 
 /** The Order table: each single Meal or Pack, Pack savings and the total paid. */
 function orderTable(order: Order, items: OrderItem[]) {
@@ -62,6 +73,8 @@ function orderTable(order: Order, items: OrderItem[]) {
       : moneyRow(e(it.label), gbp(it.total), { sub: e(tally(it.meals.map(mealLine))) }),
   );
   if (order.savings) rows.push(moneyRow('Pack savings', `−${gbp(order.savings)}`, { color: C.green }));
+  if (collecting(order)) rows.push(moneyRow('Collection', 'Free'));
+  else if (order.deliveryFee !== null && order.deliveryFee !== undefined) rows.push(moneyRow('Delivery', order.deliveryFee ? gbp(order.deliveryFee) : 'Free'));
   rows.push(moneyRow('Paid', gbp(order.total), { bold: true, last: true }));
   return table(rows.join(''));
 }
@@ -69,31 +82,39 @@ function orderTable(order: Order, items: OrderItem[]) {
 // ---------------------------------------------------------------------------
 // Customer: Order confirmation (legally required)
 
-export function confirmationEmail(order: Order, s: Settings) {
+export function confirmationEmail(order: Order, s: Settings, d: DeliveryText = NO_DELIVERY_TEXT) {
   const items = (order.items ?? []) as OrderItem[];
   const day = longDate(order.deliveryDate);
   const name = firstName(order);
   const meals = distinctMeals(items);
+  const collect = collecting(order);
+  const cutoff = orderCutoff(order);
+  const how = collect ? 'Collection' : 'Delivery';
+  const times = collect ? d.collection.times : d.deliveryWindow;
 
   const html = emailLayout({
     preheader: `Order ${order.number} is booked in for ${day}. Here's everything you need.`,
-    strip: { title: 'Order confirmed', sub: `Delivery ${day}` },
+    strip: { title: 'Order confirmed', sub: `${how} ${day}` },
     hero: {
       label: `Order ${order.number}`,
       line1: name ? `Thank you, ${name}.` : 'Thank you.',
       line2: "We're cooking for you.",
-      text: `We'll cook your Order fresh in our Manchester kitchen and bring it to you chilled on <b style="color:${C.ink};">${e(day)}</b>.`,
+      text: collect
+        ? `We'll cook your Order fresh in our Manchester kitchen and have it ready for you to collect, chilled, on <b style="color:${C.ink};">${e(day)}</b>.`
+        : `We'll cook your Order fresh in our Manchester kitchen and bring it to you chilled on <b style="color:${C.ink};">${e(day)}</b>.`,
       button: { label: 'View your Order', href: orderLink(order) },
     },
     sections: [
       s.kitchenNote ? card(para(e(s.kitchenNote), { margin: '0 0 12px' }), { eyebrow: 'A note from the kitchen', background: C.blush }) : '',
       card(orderTable(order, items), { eyebrow: 'Your Order', heading: "What's coming" }),
-      order.deliveryAddress
-        ? card(para(`<b>${e(day)}</b><br>${e(order.deliveryAddress).replace(/\n/g, '<br>')}`, { margin: '0 0 12px' }), { eyebrow: 'Delivery', heading: "Where it's going" })
-        : '',
+      collect
+        ? card(para(`<b>${e(day)}${times ? `, ${e(times)}` : ''}</b><br>${e(collectAt(d)).replace(/\n/g, '<br>')}<br>Please bring your Order number, ${e(order.number)}.`, { margin: '0 0 12px' }), { eyebrow: 'Collection', heading: 'Where to collect' })
+        : order.deliveryAddress
+          ? card(para(`<b>${e(day)}${times ? `, ${e(times)}` : ''}</b><br>${e(order.deliveryAddress).replace(/\n/g, '<br>')}`, { margin: '0 0 12px' }), { eyebrow: 'Delivery', heading: "Where it's going" })
+          : '',
       darkPanel('What happens next', 'From our kitchen to your fridge', [
-        [short(DELIVERY_PLACEHOLDER.cutoffLabel), 'Change of plan?', `Cancel for a full refund until ${e(DELIVERY_PLACEHOLDER.cutoffLabel)}. <a href="${e(cancelLink(order))}" style="color:${C.amber};">Cancel my Order</a>`],
-        [short(weekday(order.deliveryDate)), 'Delivered chilled', 'Pop your Meals straight in the fridge and eat them by the use-by date on the label.'],
+        [short(shortCutoffLabel(cutoff)), 'Change of plan?', `Cancel for a full refund until ${e(cutoffLabel(cutoff))}. <a href="${e(cancelLink(order))}" style="color:${C.amber};">Cancel my Order</a>`],
+        [short(weekday(order.deliveryDate)), collect ? 'Collect it chilled' : 'Delivered chilled', 'Pop your Meals straight in the fridge and eat them by the use-by date on the label.'],
         ['Minutes', 'Heat, eat, feel at home', 'Reheat until piping hot all the way through. Instructions are on every label.'],
       ]),
       card(
@@ -103,9 +124,10 @@ export function confirmationEmail(order: Order, s: Settings) {
         { eyebrow: 'Allergens', heading: "What's in your Meals" },
       ),
       card(
-        para(e(cancelNotice()), { size: 14 }) +
+        para(e(cancelNotice(order)), { size: 14 }) +
           para(`<a href="${e(cancelLink(order))}" style="color:${C.green};font-weight:700;">Cancel my Order</a>`, { size: 14 }) +
-          para(e(problemNotice), { size: 14, margin: '0 0 12px' }),
+          (!collect && d.failedDelivery ? para(e(d.failedDelivery), { size: 14 }) : '') +
+          para(e(problemNotice(order)), { size: 14, margin: '0 0 12px' }),
         { eyebrow: 'Good to know', heading: 'Cancelling and problems' },
       ),
     ].join(''),
@@ -114,20 +136,26 @@ export function confirmationEmail(order: Order, s: Settings) {
 
   const text = [
     `${name ? `Thank you, ${name}.` : 'Thank you.'} We're cooking for you.`,
-    `Order ${order.number} · delivery on ${day}`,
+    `Order ${order.number} · ${how.toLowerCase()} on ${day}${times ? `, ${times}` : ''}`,
     s.kitchenNote ? `\nA note from the kitchen: ${s.kitchenNote}` : '',
     '\nYOUR ORDER',
     ...items.map(it => (it.kind === 'single' ? `${it.qty} × ${it.label}  ${gbp(it.total)}` : `${it.label}  ${gbp(it.total)}\n  ${tally(it.meals.map(mealLine))}`)),
     order.savings ? `Pack savings  −${gbp(order.savings)}` : '',
+    collect ? 'Collection  Free' : order.deliveryFee !== null && order.deliveryFee !== undefined ? `Delivery  ${order.deliveryFee ? gbp(order.deliveryFee) : 'Free'}` : '',
     `Paid  ${gbp(order.total)}`,
-    order.deliveryAddress ? `\nDELIVERY\n${day}\n${order.deliveryAddress}` : '',
+    collect
+      ? `\nCOLLECTION\n${day}${times ? `, ${times}` : ''}\n${collectAt(d)}\nPlease bring your Order number.`
+      : order.deliveryAddress
+        ? `\nDELIVERY\n${day}${times ? `, ${times}` : ''}\n${order.deliveryAddress}`
+        : '',
     '\nALLERGENS',
     ...meals.map(m => `- ${mealLine(m)}: ${allergenText(m)}`),
     'Full ingredients are on each Meal’s page and on every label.',
     '\nCANCELLING AND PROBLEMS',
-    cancelNotice(),
+    cancelNotice(order),
     `Cancel my Order: ${cancelLink(order)}`,
-    problemNotice,
+    !collect && d.failedDelivery ? d.failedDelivery : '',
+    problemNotice(order),
     `\nView your Order: ${orderLink(order)}`,
     `\n"Food that carries the flavour of home." The OlaJesu kitchen, Manchester`,
     businessFooterText(),
@@ -142,8 +170,8 @@ export function confirmationEmail(order: Order, s: Settings) {
 export async function sendOrderConfirmation(payload: Payload, orderId: number) {
   const order = await payload.findByID({ collection: 'orders', id: orderId, depth: 0, overrideAccess: true, showHiddenFields: true });
   if (!order.email || order.confirmationSentAt || !['paid', 'preparing', 'ready', 'out-for-delivery', 'delivered'].includes(order.status)) return false;
-  const s = await settings(payload);
-  const { subject, html, text } = confirmationEmail(order, s);
+  const [s, rules] = await Promise.all([settings(payload), getDeliveryRules(payload)]);
+  const { subject, html, text } = confirmationEmail(order, s, rules);
   const result = await sendEmail({ to: order.email, subject, html, text, replyTo: kitchenInbox(s), idempotencyKey: `confirmation-${order.id}` });
   if (result.sent) await payload.update({ collection: 'orders', id: order.id, overrideAccess: true, data: { confirmationSentAt: new Date().toISOString() } });
   return result.sent;
@@ -165,12 +193,19 @@ export function kitchenOrderEmail(order: Order) {
   const html = emailLayout({
     preheader: `${gbp(order.total)} from ${who} for ${day}`,
     strip: { title: 'New Order', sub: `${gbp(order.total)} · ${day}` },
-    hero: { label: `Order ${order.number}`, line1: `New Order from ${who}.`, line2: `${gbp(order.total)} for ${weekday(order.deliveryDate)}.`, button: { label: 'Open in the dashboard', href: admin } },
-    sections: card(orderTable(order, items), { eyebrow: 'To cook', heading: "What's in it" }),
+    hero: {
+      label: `Order ${order.number}`,
+      line1: `New Order from ${who}.`,
+      line2: `${gbp(order.total)} for ${weekday(order.deliveryDate)}, ${collecting(order) ? 'collecting' : 'delivery'}.`,
+      button: { label: 'Open in the dashboard', href: admin },
+    },
+    sections:
+      (order.addressCheck ? card(para(`<b>Check the address.</b> ${e(order.addressCheck)}`, { margin: '0 0 12px' }), { background: C.blush }) : '') +
+      card(orderTable(order, items), { eyebrow: 'To cook', heading: "What's in it" }),
     footer: 'Sent to the Kitchen inbox for every paid Order. Switch it off in Admin, Kitchen emails. The full lists arrive at the cut-off.',
     signOff: false,
   });
-  const text = `New Order ${order.number} from ${who}\n${gbp(order.total)} for ${day}\n\n${order.summary ?? ''}\n\nOpen in the dashboard: ${admin}`;
+  const text = `New Order ${order.number} from ${who}\n${gbp(order.total)} for ${day}, ${collecting(order) ? 'collecting' : 'delivery'}${order.addressCheck ? `\n\nCHECK THE ADDRESS: ${order.addressCheck}` : ''}\n\n${order.summary ?? ''}\n\nOpen in the dashboard: ${admin}`;
   return { subject: `New Order ${order.number} · ${gbp(order.total)} · ${weekday(order.deliveryDate)}`, html, text };
 }
 
@@ -184,11 +219,11 @@ export async function sendKitchenNewOrder(payload: Payload, orderId: number) {
 // ---------------------------------------------------------------------------
 // Customer: out for delivery / ready to collect
 
-export function statusEmail(order: Order) {
+export function statusEmail(order: Order, d: DeliveryText = NO_DELIVERY_TEXT) {
   const out = order.status === 'out-for-delivery';
   const name = firstName(order);
   const html = emailLayout({
-    preheader: out ? 'Your Meals are on their way today. Keep your phone close.' : 'Your Meals are ready to collect from Mary Street.',
+    preheader: out ? 'Your Meals are on their way today. Keep your phone close.' : 'Your Meals are ready to collect from our kitchen.',
     strip: { title: out ? 'On its way today' : 'Ready to collect', sub: `Order ${order.number}` },
     hero: {
       label: `Order ${order.number}`,
@@ -196,7 +231,7 @@ export function statusEmail(order: Order) {
       line2: out ? 'Your Meals are coming.' : 'Your Meals are ready.',
       text: out
         ? "We're out delivering your Order today. Please keep your phone close in case we need to find you."
-        : `Your Order is ready to collect from our kitchen at ${e(contact.address.full)}. Please bring your Order number.`,
+        : `Your Order is ready to collect from our kitchen at ${e(collectAt(d))}${d.collection.times ? `, ${e(d.collection.times)}` : ''}. Please bring your Order number.`,
     },
     sections: darkPanel(out ? 'When it arrives' : 'When you get home', 'Keep it fresh', [
       ['Fridge', 'Straight in the fridge', 'Your Meals are chilled, so pop them in the fridge as soon as you can.'],
@@ -207,20 +242,20 @@ export function statusEmail(order: Order) {
   });
   const text = out
     ? `Good news${name ? `, ${name}` : ''}. Your Meals are on their way.\nOrder ${order.number}\n\nWe're out delivering your Order today. Please keep your phone close.\nWhen it arrives, pop your Meals straight in the fridge and eat them by the use-by date on the label.\n\n${businessFooterText()}`
-    : `Good news${name ? `, ${name}` : ''}. Your Meals are ready.\nOrder ${order.number}\n\nCollect from ${contact.address.full}. Please bring your Order number.\n\n${businessFooterText()}`;
+    : `Good news${name ? `, ${name}` : ''}. Your Meals are ready.\nOrder ${order.number}\n\nCollect from ${collectAt(d)}${d.collection.times ? `, ${d.collection.times}` : ''}. Please bring your Order number.\n\n${businessFooterText()}`;
   return { subject: out ? `Your Meals are on their way (${order.number})` : `Your Meals are ready to collect (${order.number})`, html, text };
 }
 
 export async function sendStatusEmail(payload: Payload, order: Order, req?: PayloadRequest) {
   if (!order.email || (order.status !== 'out-for-delivery' && order.status !== 'ready')) return false;
-  const s = await settings(payload, req);
-  return (await sendEmail({ to: order.email, ...statusEmail(order), replyTo: kitchenInbox(s), idempotencyKey: `status-${order.id}-${order.status}` })).sent;
+  const [s, rules] = await Promise.all([settings(payload, req), getDeliveryRules(payload, req)]);
+  return (await sendEmail({ to: order.email, ...statusEmail(order, rules), replyTo: kitchenInbox(s), idempotencyKey: `status-${order.id}-${order.status}` })).sent;
 }
 
 // ---------------------------------------------------------------------------
 // Kitchen: Cook, Packing and Delivery lists at the Cut-off
 
-const LIST_STATUSES = ['paid', 'preparing', 'ready', 'out-for-delivery', 'delivered'] as const;
+const LIST_STATUSES = ['paid', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'partly-refunded'] as const;
 
 export function kitchenLists(orders: Order[]) {
   const cook = new Map<string, number>();
@@ -233,8 +268,8 @@ export function kitchenLists(orders: Order[]) {
         for (const a of m.addOnNames ?? []) addOns.set(a, (addOns.get(a) ?? 0) + n);
       }
   const sorted = (m: Map<string, number>) => [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const byPostcode = [...orders].sort((a, b) => postcode(a).localeCompare(postcode(b), 'en', { numeric: true }));
-  return { cook: sorted(cook), addOns: sorted(addOns), packing: orders, delivery: byPostcode };
+  const byPostcode = orders.filter(o => !collecting(o)).sort((a, b) => postcode(a).localeCompare(postcode(b), 'en', { numeric: true }));
+  return { cook: sorted(cook), addOns: sorted(addOns), packing: orders, delivery: byPostcode, collection: orders.filter(collecting) };
 }
 const postcode = (o: Order) => (o.deliveryAddress ?? '').trim().split('\n').pop() ?? '';
 
@@ -260,12 +295,22 @@ export function listsEmail(orders: Order[], deliveryDate: string) {
               .join(''),
             { eyebrow: 'Packing list', heading: 'What goes in each Order' },
           ),
-          card(
-            lists.delivery
-              .map(o => para(`<b>${e(o.number)}</b> · ${e(o.customerName ?? '')} · ${e(o.phone ?? '')}<br><span style="color:${C.muted};font-size:14px;">${e(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}</span>`, { margin: '0 0 14px' }))
-              .join('') + para(muted('Sorted by postcode. Contains Customers’ personal details: keep it to the kitchen.'), { margin: '0 0 12px' }),
-            { eyebrow: 'Delivery list', heading: 'Where it all goes' },
-          ),
+          lists.delivery.length
+            ? card(
+                lists.delivery
+                  .map(o =>
+                    para(
+                      `<b>${e(o.number)}</b> · ${e(o.customerName ?? '')} · ${e(o.phone ?? '')}<br><span style="color:${C.muted};font-size:14px;">${e(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}</span>${o.addressCheck ? `<br><b style="color:${C.jollof};">Check: ${e(o.addressCheck)}</b>` : ''}`,
+                      { margin: '0 0 14px' },
+                    ),
+                  )
+                  .join('') + para(muted('Sorted by postcode. Contains Customers’ personal details: keep it to the kitchen.'), { margin: '0 0 12px' }),
+                { eyebrow: 'Delivery list', heading: 'Where it all goes' },
+              )
+            : '',
+          lists.collection.length
+            ? card(lists.collection.map(o => para(`<b>${e(o.number)}</b> · ${e(o.customerName ?? '')} · ${e(o.phone ?? '')}`, { margin: '0 0 14px' })).join(''), { eyebrow: 'Collection list', heading: 'Being collected' })
+            : '',
         ].join('')
       : card(para('No Orders for this delivery day.', { margin: '0 0 12px' })),
     footer: 'Sent to the Kitchen inbox at each cut-off.',
@@ -279,8 +324,10 @@ export function listsEmail(orders: Order[], deliveryDate: string) {
         ...(lists.addOns.length ? ['\nADD-ONS', ...lists.addOns.map(([n, c]) => `${c} × ${n}`)] : []),
         '\nPACKING LIST',
         ...lists.packing.map(o => `${o.number} · ${o.customerName ?? ''}\n${o.summary ?? ''}\n`),
-        '\nDELIVERY LIST (by postcode)',
-        ...lists.delivery.map(o => `${o.number} · ${o.customerName ?? ''} · ${o.phone ?? ''}\n${(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}\n`),
+        ...(lists.delivery.length
+          ? ['\nDELIVERY LIST (by postcode)', ...lists.delivery.map(o => `${o.number} · ${o.customerName ?? ''} · ${o.phone ?? ''}\n${(o.deliveryAddress ?? 'No address').replace(/\n/g, ', ')}${o.addressCheck ? `\nCHECK: ${o.addressCheck}` : ''}\n`)]
+          : []),
+        ...(lists.collection.length ? ['\nCOLLECTION LIST', ...lists.collection.map(o => `${o.number} · ${o.customerName ?? ''} · ${o.phone ?? ''}`)] : []),
       ].join('\n')
     : `Kitchen lists for ${day}\nNo Orders for this delivery day.`;
   return { subject: `Kitchen lists for ${day}: ${plural(orders.length, 'Order')}, ${plural(meals, 'Meal')}`, html, text };

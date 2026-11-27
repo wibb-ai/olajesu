@@ -101,8 +101,8 @@ export async function currentCustomer(payload?: Payload): Promise<Customer | nul
 }
 
 /** What a client component may know about the signed-in Customer. */
-export type AccountSummary = { firstName: string; email: string } | null;
-export const summary = (c: Customer | null): AccountSummary => (c ? { firstName: (c.name ?? '').split(/\s+/)[0] ?? '', email: c.email } : null);
+export type AccountSummary = { firstName: string; email: string; postcode: string } | null;
+export const summary = (c: Customer | null): AccountSummary => (c ? { firstName: (c.name ?? '').split(/\s+/)[0] ?? '', email: c.email, postcode: c.postcode ?? '' } : null);
 
 // ---------------------------------------------------------------------------
 // Details
